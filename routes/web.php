@@ -5,6 +5,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\CheckoutController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/product/{id}', [ProductController::class, 'show'])->name('product.show');
@@ -21,6 +22,11 @@ Route::post('/cart/remove', [CartController::class, 'remove'])->name('cart.remov
 Route::post('/cart/clear', [CartController::class, 'clear'])->name('cart.clear');
 Route::get('/cart/count', [CartController::class, 'count'])->name('cart.count');
 
+// Checkout routes
+Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
+Route::post('/checkout/process', [CheckoutController::class, 'process'])->name('checkout.process');
+Route::get('/checkout/success', [CheckoutController::class, 'success'])->name('checkout.success');
+
 // Test route (only in development)
 if (config('app.debug')) {
     Route::get('/test-cart', function () {
@@ -28,7 +34,7 @@ if (config('app.debug')) {
         $cartCount = array_sum(array_column($cart, 'quantity'));
         return view('test-cart', compact('cartCount'));
     })->name('test.cart');
-    
+
     Route::get('/cart-debug', function () {
         return view('cart-debug');
     })->name('cart.debug');
