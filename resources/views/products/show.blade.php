@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', $product['name'] . ' - Hang The Thao')
+@section('title', $product->name . ' - Hang The Thao')
 
 @push('styles')
 <style>
@@ -269,12 +269,20 @@
 @section('content')
 <!-- Breadcrumb -->
 <section class="py-3 bg-light">
-    <div class="container">
-        <nav aria-label="breadcrumb">
+    <div class="container">        <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a href="{{ route('home') }}">Trang chủ</a></li>
-                <li class="breadcrumb-item"><a href="#">{{ $product['category_name'] }}</a></li>
-                <li class="breadcrumb-item active">{{ $product['name'] }}</li>
+                <li class="breadcrumb-item"><a href="{{ route('home') }}">Trang chủ</a></li>                <li class="breadcrumb-item"><a href="{{ route('category.index', $product->category) }}">
+                    @if($product->category === 'ao-clb')
+                        Áo CLB
+                    @elseif($product->category === 'ao-doi-tuyen')
+                        Áo Đội Tuyển
+                    @elseif($product->category === 'phu-kien')
+                        Phụ Kiện
+                    @else
+                        {{ ucfirst(str_replace('-', ' ', $product->category)) }}
+                    @endif
+                </a></li>
+                <li class="breadcrumb-item active">{{ $product->name }}</li>
             </ol>
         </nav>
     </div>
@@ -286,100 +294,103 @@
         <div class="row">
             <!-- Product Gallery -->
             <div class="col-lg-6">
-                <div class="product-gallery">
-                    <!-- Main Image -->
+                <div class="product-gallery">                    <!-- Main Image -->
                     <div class="main-image-container">
-                        <img id="mainImage" src="https://via.placeholder.com/500x600/000000/ffffff?text=Áo+Khoác+Gió" 
-                             alt="{{ $product['name'] }}" class="img-fluid main-image">
+                        <img id="mainImage" src="{{ $product->main_image }}" 
+                             alt="{{ $product->name }}" class="img-fluid main-image">
                     </div>
                     
                     <!-- Thumbnail Images -->
                     <div class="thumbnail-images">
-                        <div class="thumbnail-item active" onclick="changeMainImage(this, 'https://via.placeholder.com/500x600/000000/ffffff?text=Áo+Khoác+Gió')">
-                            <img src="https://via.placeholder.com/80x80/000000/ffffff?text=1" alt="Thumbnail 1">
-                        </div>
-                        <div class="thumbnail-item" onclick="changeMainImage(this, 'https://via.placeholder.com/500x600/333333/ffffff?text=Áo+Khoác+2')">
-                            <img src="https://via.placeholder.com/80x80/333333/ffffff?text=2" alt="Thumbnail 2">
-                        </div>
-                        <div class="thumbnail-item" onclick="changeMainImage(this, 'https://via.placeholder.com/500x600/666666/ffffff?text=Áo+Khoác+3')">
-                            <img src="https://via.placeholder.com/80x80/666666/ffffff?text=3" alt="Thumbnail 3">
-                        </div>
-                        <div class="thumbnail-item" onclick="changeMainImage(this, 'https://via.placeholder.com/500x600/999999/ffffff?text=Áo+Khoác+4')">
-                            <img src="https://via.placeholder.com/80x80/999999/ffffff?text=4" alt="Thumbnail 4">
-                        </div>
-                        <div class="thumbnail-item" onclick="changeMainImage(this, 'https://via.placeholder.com/500x600/cccccc/000000?text=Áo+Khoác+5')">
-                            <img src="https://via.placeholder.com/80x80/cccccc/000000?text=5" alt="Thumbnail 5">
-                        </div>
+                        @if($product->images && count($product->images) > 0)
+                            @foreach($product->images as $index => $image)
+                                <div class="thumbnail-item {{ $index === 0 ? 'active' : '' }}" onclick="changeMainImage(this, '{{ $image }}')">
+                                    <img src="{{ $image }}" alt="Hình {{ $index + 1 }}">
+                                </div>
+                            @endforeach
+                        @else
+                            <div class="thumbnail-item active" onclick="changeMainImage(this, '{{ $product->main_image }}')">
+                                <img src="{{ $product->main_image }}" alt="Hình chính">
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>
             
             <!-- Product Info -->
             <div class="col-lg-6">
-                <div class="product-info">
-                    <!-- Product Title -->
-                    <h1 class="product-title">{{ $product['name'] }}</h1>
+                <div class="product-info">                    <!-- Product Title -->
+                    <h1 class="product-title">{{ $product->name }}</h1>
                     
                     <!-- Brand -->
                     <div class="product-brand">
-                        <strong>Hãng:</strong> {{ $product['brand'] }}
+                        <strong>Hãng:</strong> {{ $product->brand }}
                     </div>
                     
                     <!-- Rating -->
                     <div class="product-rating">
                         <div class="stars">
                             @for($i = 1; $i <= 5; $i++)
-                                <i class="fas fa-star{{ $i <= $product['rating'] ? '' : '-o' }}"></i>
+                                <i class="fas fa-star{{ $i <= $product->rating ? '' : '-o' }}"></i>
                             @endfor
                         </div>
-                        <span>({{ $product['total_reviews'] }} đánh giá)</span>
+                        <span>({{ $product->reviews_count }} đánh giá)</span>
                     </div>
                     
                     <!-- Price -->
                     <div class="price-section">
                         <div class="d-flex align-items-center">
-                            <span class="current-price">{{ number_format($product['price']) }}₫</span>
-                            @if($product['original_price'] > $product['price'])
-                                <span class="original-price">{{ number_format($product['original_price']) }}₫</span>
-                                <span class="discount-badge">-{{ $product['discount_percent'] }}%</span>
+                            <span class="current-price">{{ $product->formatted_price }}</span>
+                            @if($product->original_price && $product->original_price > $product->price)
+                                <span class="original-price">{{ $product->formatted_original_price }}</span>
+                                @php
+                                    $discountPercent = round((($product->original_price - $product->price) / $product->original_price) * 100);
+                                @endphp
+                                <span class="discount-badge">-{{ $discountPercent }}%</span>
                             @endif
                         </div>
                     </div>
                     
                     <!-- Stock Status -->
                     <div class="stock-status">
-                        <i class="fas fa-check-circle {{ $product['in_stock'] ? 'text-success' : 'text-danger' }}"></i>
-                        <span class="{{ $product['in_stock'] ? 'stock-available' : 'stock-out' }}">
-                            {{ $product['in_stock'] ? 'Còn hàng' : 'Hết hàng' }}
+                        @php
+                            $inStock = $product->stock_quantity > 0;
+                        @endphp
+                        <i class="fas fa-check-circle {{ $inStock ? 'text-success' : 'text-danger' }}"></i>
+                        <span class="{{ $inStock ? 'stock-available' : 'stock-out' }}">
+                            {{ $inStock ? 'Còn hàng' : 'Hết hàng' }}
                         </span>
-                        @if($product['in_stock'])
-                            <span class="text-muted">({{ $product['stock_quantity'] }} sản phẩm có sẵn)</span>
+                        @if($inStock)
+                            <span class="text-muted">({{ $product->stock_quantity }} sản phẩm có sẵn)</span>
                         @endif
                     </div>
-                    
-                    <!-- Size Selector -->
-                    <div class="size-selector">
-                        <label class="form-label fw-bold">Kích thước:</label>
-                        <div class="size-options">
-                            @foreach($product['sizes'] as $index => $size)
-                                <div class="size-option {{ $index === 0 ? 'active' : '' }}" onclick="selectSize(this)">
-                                    {{ $size }}
-                                </div>
-                            @endforeach
+                      <!-- Size Selector -->
+                    @if($product->sizes && count($product->sizes) > 0)
+                        <div class="size-selector">
+                            <label class="form-label fw-bold">Kích thước:</label>
+                            <div class="size-options">
+                                @foreach($product->sizes as $index => $size)
+                                    <div class="size-option {{ $index === 0 ? 'active' : '' }}" onclick="selectSize(this)">
+                                        {{ $size }}
+                                    </div>
+                                @endforeach
+                            </div>
                         </div>
-                    </div>
+                    @endif
                     
                     <!-- Color Selector -->
-                    <div class="color-selector">
-                        <label class="form-label fw-bold">Màu sắc:</label>
-                        <div class="color-options">
-                            @foreach($product['colors'] as $index => $color)
-                                <div class="color-option {{ $index === 0 ? 'active' : '' }}" onclick="selectColor(this)">
-                                    {{ $color }}
-                                </div>
-                            @endforeach
+                    @if($product->colors && count($product->colors) > 0)
+                        <div class="color-selector">
+                            <label class="form-label fw-bold">Màu sắc:</label>
+                            <div class="color-options">
+                                @foreach($product->colors as $index => $color)
+                                    <div class="color-option {{ $index === 0 ? 'active' : '' }}" onclick="selectColor(this)">
+                                        {{ $color }}
+                                    </div>
+                                @endforeach
+                            </div>
                         </div>
-                    </div>
+                    @endif
                     
                     <!-- Quantity -->
                     <div class="quantity-selector">
@@ -388,7 +399,7 @@
                             <button type="button" class="quantity-btn" onclick="decreaseQuantity()">
                                 <i class="fas fa-minus"></i>
                             </button>
-                            <input type="number" id="quantity" class="quantity-number" value="1" min="1" max="{{ $product['stock_quantity'] }}">
+                            <input type="number" id="quantity" class="quantity-number" value="1" min="1" max="{{ $product->stock_quantity }}">
                             <button type="button" class="quantity-btn" onclick="increaseQuantity()">
                                 <i class="fas fa-plus"></i>
                             </button>
@@ -432,14 +443,21 @@
         
         <!-- Product Features -->
         <div class="row mt-5">
-            <div class="col-12">
-                <div class="product-features">
+            <div class="col-12">                <div class="product-features">
                     <h4 class="section-title mb-3">Đặc điểm sản phẩm</h4>
-                    <ul class="feature-list">
-                        @foreach($product['features'] as $feature)
-                            <li>{{ $feature }}</li>
-                        @endforeach
-                    </ul>
+                    @if($product->description)
+                        <div class="mb-3">
+                            <p>{{ $product->description }}</p>
+                        </div>
+                    @endif
+                    
+                    @if($product->specifications && count($product->specifications) > 0)
+                        <ul class="feature-list">
+                            @foreach($product->specifications as $key => $value)
+                                <li><strong>{{ $key }}:</strong> {{ $value }}</li>
+                            @endforeach
+                        </ul>
+                    @endif
                 </div>
             </div>
         </div>
@@ -450,34 +468,33 @@
 <section class="py-5 bg-light related-products">
     <div class="container">
         <h2 class="section-title text-center mb-5">SẢN PHẨM LIÊN QUAN</h2>
-        
-        <div class="row g-4">
+          <div class="row g-4">
             @foreach($relatedProducts as $relatedProduct)
                 <div class="col-lg-2 col-md-4 col-6">
                     <div class="related-product-card card h-100">
-                        <a href="{{ route('product.show', $relatedProduct['id']) }}">
-                            <img src="https://via.placeholder.com/200x250/{{ str_pad(dechex(rand(0, 16777215)), 6, '0', STR_PAD_LEFT) }}/ffffff?text={{ urlencode($relatedProduct['name']) }}" 
-                                 class="card-img-top" alt="{{ $relatedProduct['name'] }}" style="height: 200px; object-fit: cover;">
+                        <a href="{{ route('products.show', $relatedProduct->id) }}">
+                            <img src="{{ $relatedProduct->main_image }}" 
+                                 class="card-img-top" alt="{{ $relatedProduct->name }}" style="height: 200px; object-fit: cover;">
                         </a>
                         <div class="card-body p-3">
                             <h6 class="card-title mb-2">
-                                <a href="{{ route('product.show', $relatedProduct['id']) }}" class="text-decoration-none text-dark">
-                                    {{ $relatedProduct['name'] }}
+                                <a href="{{ route('products.show', $relatedProduct->id) }}" class="text-decoration-none text-dark">
+                                    {{ $relatedProduct->name }}
                                 </a>
                             </h6>
                             <div class="rating mb-2">
                                 @for($i = 1; $i <= 5; $i++)
-                                    <i class="fas fa-star{{ $i <= $relatedProduct['rating'] ? '' : '-o' }}"></i>
+                                    <i class="fas fa-star{{ $i <= $relatedProduct->rating ? '' : '-o' }}"></i>
                                 @endfor
                             </div>
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
-                                    <p class="price mb-0">{{ number_format($relatedProduct['price']) }}₫</p>
-                                    @if(isset($relatedProduct['original_price']) && $relatedProduct['original_price'] > $relatedProduct['price'])
-                                        <small class="text-muted text-decoration-line-through">{{ number_format($relatedProduct['original_price']) }}₫</small>
+                                    <p class="price mb-0">{{ $relatedProduct->formatted_price }}</p>
+                                    @if($relatedProduct->original_price && $relatedProduct->original_price > $relatedProduct->price)
+                                        <small class="text-muted text-decoration-line-through">{{ $relatedProduct->formatted_original_price }}</small>
                                     @endif
                                 </div>
-                                <button class="btn btn-sm btn-outline-danger" onclick="addToCartQuick({{ $relatedProduct['id'] }})">
+                                <button class="btn btn-sm btn-outline-danger" onclick="addToCartQuick({{ $relatedProduct->id }})">
                                     <i class="fas fa-cart-plus"></i>
                                 </button>
                             </div>
@@ -571,8 +588,7 @@
                 color: 'Đỏ',
                 image: '/images/placeholder-product.jpg'
             })
-        })
-        .then(response => response.json())
+        })        .then(response => response.json())
         .then(data => {
             if (data.success) {
                 // Use the notification system from product-detail.js

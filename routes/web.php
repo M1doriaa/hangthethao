@@ -6,9 +6,24 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CheckoutController;
+// Admin Controllers
+use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Admin\ProductController as AdminProductController;
+use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/product/{id}', [ProductController::class, 'show'])->name('product.show');
+
+// Product detail route - using closure due to ProductController autoload issues
+Route::get('/products/{id}', function($id) {
+    $product = App\Models\Product::active()->findOrFail($id);
+    $relatedProducts = App\Models\Product::active()
+        ->where('category', $product->category)
+        ->where('id', '!=', $product->id)
+        ->limit(6)
+        ->get();
+    return view('products.show', compact('product', 'relatedProducts'));
+})->name('products.show');
 
 // Category routes
 Route::get('/category/{category}', [CategoryController::class, 'index'])->name('category.index');
@@ -27,15 +42,23 @@ Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.in
 Route::post('/checkout/process', [CheckoutController::class, 'process'])->name('checkout.process');
 Route::get('/checkout/success', [CheckoutController::class, 'success'])->name('checkout.success');
 
-// Test route (only in development)
-if (config('app.debug')) {
-    Route::get('/test-cart', function () {
-        $cart = session()->get('cart', []);
-        $cartCount = array_sum(array_column($cart, 'quantity'));
-        return view('test-cart', compact('cartCount'));
-    })->name('test.cart');
-
-    Route::get('/cart-debug', function () {
-        return view('cart-debug');
-    })->name('cart.debug');
-}
+// Admin routes
+Route::prefix('admin')->name('admin.')->group(function () {
+    Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
+    
+    // Product management
+    Route::resource('products', AdminProductController::class);
+    
+    // Order management (thay thế category management)
+    Route::resource('orders', AdminOrderController::class)->only(['index', 'show', 'update', 'destroy']);
+    
+    // API routes for admin
+    Route::prefix('api')->name('api.')->group(function () {
+        Route::get('products/search', [AdminProductController::class, 'search'])->name('products.search');
+        Route::post('products/{product}/toggle-featured', [AdminProductController::class, 'toggleFeatured'])->name('products.toggle-featured');
+        Route::post('products/{product}/toggle-status', [AdminProductController::class, 'toggleStatus'])->name('products.toggle-status');
+        
+        // Order status update API
+        Route::post('orders/{order}/update-status', [AdminOrderController::class, 'updateStatus'])->name('orders.update-status');
+    });
+});

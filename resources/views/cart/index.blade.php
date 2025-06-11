@@ -96,7 +96,7 @@
     
     .summary-row {
         display: flex;
-        justify-content: between;
+        justify-content: space-between;
         align-items: center;
         margin-bottom: 10px;
         padding: 5px 0;
@@ -122,7 +122,8 @@
         margin-bottom: 20px;
     }
     
-    .remove-btn {
+    .remove-btn,
+    .remove-item-btn {
         background: none;
         border: none;
         color: #dc3545;
@@ -132,7 +133,8 @@
         transition: all 0.2s ease;
     }
     
-    .remove-btn:hover {
+    .remove-btn:hover,
+    .remove-item-btn:hover {
         background: #dc3545;
         color: white;
     }
@@ -225,10 +227,10 @@
                                         <div class="cart-item-info">
                                             <h6>{{ $item['name'] }}</h6>
                                             <div class="cart-item-details">
-                                                @if($item['size'])
+                                                @if($item['size'] ?? false)
                                                     <span>Kích thước: <strong>{{ $item['size'] }}</strong></span><br>
                                                 @endif
-                                                @if($item['color'])
+                                                @if($item['color'] ?? false)
                                                     <span>Màu sắc: <strong>{{ $item['color'] }}</strong></span>
                                                 @endif
                                             </div>
@@ -241,21 +243,22 @@
                                     </div>
                                     <div class="col-md-3 col-6">
                                         <div class="quantity-controls">
-                                            <button class="quantity-btn" onclick="updateQuantity('{{ $key }}', {{ $item['quantity'] - 1 }})">
+                                            <button class="quantity-btn" onclick="decreaseQuantity('{{ $key }}')">
                                                 <i class="fas fa-minus"></i>
                                             </button>
                                             <input type="number" 
                                                    class="quantity-input" 
                                                    value="{{ $item['quantity'] }}" 
                                                    min="1" 
-                                                   onchange="updateQuantity('{{ $key }}', this.value)">
-                                            <button class="quantity-btn" onclick="updateQuantity('{{ $key }}', {{ $item['quantity'] + 1 }})">
+                                                   id="qty-{{ $key }}"
+                                                   onchange="updateQuantityFromInput('{{ $key }}', this.value)">
+                                            <button class="quantity-btn" onclick="increaseQuantity('{{ $key }}')">
                                                 <i class="fas fa-plus"></i>
                                             </button>
                                         </div>
                                     </div>
                                     <div class="col-md-1 col-12 text-end">
-                                        <button class="remove-btn" onclick="removeFromCart('{{ $key }}')">
+                                        <button class="remove-item-btn" onclick="removeCartItem('{{ $key }}', '{{ $item['name'] }}')" title="Xóa sản phẩm">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </div>
@@ -269,10 +272,11 @@
                         <a href="{{ route('home') }}" class="continue-shopping">
                             <i class="fas fa-arrow-left me-2"></i>
                             Tiếp tục mua sắm
-                        </a>                                        <button class="btn btn-outline-danger" id="clear-cart-btn">
-                                            <i class="fas fa-trash me-2"></i>
-                                            Xóa toàn bộ giỏ hàng
-                                        </button>
+                        </a>
+                        <button class="btn btn-outline-danger" onclick="clearEntireCart()">
+                            <i class="fas fa-trash me-2"></i>
+                            Xóa toàn bộ giỏ hàng
+                        </button>
                     </div>
                 </div>
                 
@@ -280,7 +284,7 @@
                 <div class="col-lg-4">
                     <div class="cart-summary" id="cart-summary">
                         <h5>Tóm tắt đơn hàng</h5>
-                          <div class="summary-row">
+                        <div class="summary-row">
                             <span>Tạm tính:</span>
                             <span id="cart-subtotal">{{ number_format($cartSummary['subtotal']) }}₫</span>
                         </div>
@@ -337,30 +341,41 @@
 </section>
 
 <!-- Recommended Products -->
-@if(!empty($cartItems))
+@if(!empty($cartItems) && isset($recommendedProducts) && $recommendedProducts->count() > 0)
 <section class="py-5 bg-light">
     <div class="container">
         <h3 class="section-title text-center mb-4">Sản phẩm gợi ý</h3>
         <div class="row g-4">
-            <!-- Add recommended products here -->
+            @foreach($recommendedProducts as $product)
             <div class="col-lg-3 col-md-6">
                 <div class="card product-card h-100">
-                    <img src="https://via.placeholder.com/250x200/cccccc/ffffff?text=Recommended+1" class="card-img-top" alt="Sản phẩm gợi ý">
+                    <a href="{{ route('products.show', $product->id) }}">
+                        <img src="{{ $product->main_image ?? 'https://via.placeholder.com/250x200/cccccc/ffffff?text=Product' }}" 
+                             class="card-img-top" 
+                             alt="{{ $product->name }}"
+                             style="height: 200px; object-fit: cover;">
+                    </a>
                     <div class="card-body">
-                        <h6 class="card-title">Áo thun thể thao nam</h6>
+                        <h6 class="card-title">
+                            <a href="{{ route('products.show', $product->id) }}" 
+                               class="text-decoration-none text-dark">
+                                {{ $product->name }}
+                            </a>
+                        </h6>
                         <div class="rating mb-2">
-                            <i class="fas fa-star text-warning"></i>
-                            <i class="fas fa-star text-warning"></i>
-                            <i class="fas fa-star text-warning"></i>
-                            <i class="fas fa-star text-warning"></i>
-                            <i class="fas fa-star text-warning"></i>
+                            @for($i = 1; $i <= 5; $i++)
+                                <i class="fas fa-star{{ $i <= $product->rating ? ' text-warning' : ' text-muted' }}"></i>
+                            @endfor
                         </div>
-                        <p class="price mb-2">299.000₫</p>
-                        <button class="btn btn-outline-primary btn-sm">Thêm vào giỏ</button>
+                        <p class="price mb-2 text-danger fw-bold">{{ $product->formatted_price }}</p>
+                        <a href="{{ route('products.show', $product->id) }}" 
+                           class="btn btn-outline-primary btn-sm w-100">
+                            <i class="fas fa-eye me-1"></i>Xem chi tiết
+                        </a>
                     </div>
                 </div>
             </div>
-            <!-- Repeat for more products... -->
+            @endforeach
         </div>
     </div>
 </section>
@@ -369,7 +384,195 @@
 
 @push('scripts')
 <script>
-    // Cart functionality is now handled by cart.js
-    // No additional JavaScript needed here
+// Global cart functions using onclick handlers to avoid duplicate listeners
+const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+// Increase quantity function
+function increaseQuantity(key) {
+    console.log('🔼 Increase quantity for:', key);
+    const input = document.getElementById('qty-' + key);
+    if (input) {
+        const currentValue = parseInt(input.value);
+        const newValue = currentValue + 1;
+        input.value = newValue;
+        updateQuantityAPI(key, newValue);
+    }
+}
+
+// Decrease quantity function
+function decreaseQuantity(key) {
+    console.log('🔽 Decrease quantity for:', key);
+    const input = document.getElementById('qty-' + key);
+    if (input) {
+        const currentValue = parseInt(input.value);
+        if (currentValue > 1) {
+            const newValue = currentValue - 1;
+            input.value = newValue;
+            updateQuantityAPI(key, newValue);
+        }
+    }
+}
+
+// Update quantity from direct input change
+function updateQuantityFromInput(key, value) {
+    console.log('📝 Update quantity from input:', key, value);
+    const quantity = parseInt(value);
+    if (quantity >= 1) {
+        updateQuantityAPI(key, quantity);
+    }
+}
+
+// Remove cart item function
+function removeCartItem(key, name) {
+    console.log('🗑️ Remove item:', key, name);
+    removeItemAPI(key);
+}
+
+// Clear entire cart function
+function clearEntireCart() {
+    console.log('🧹 Clear entire cart');
+    clearCartAPI();
+}
+
+// API Functions
+async function updateQuantityAPI(key, quantity) {
+    console.log('🔄 API Update quantity:', key, '=', quantity);
+    
+    try {
+        const response = await fetch('/cart/update', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ key: key, quantity: quantity })
+        });
+        
+        const result = await response.json();
+        console.log('📡 Update response:', result);
+        
+        if (response.ok && result.cart_summary) {
+            updateCartSummary(result.cart_summary);
+        }
+        
+    } catch (error) {
+        console.error('❌ Update error:', error);
+    }
+}
+
+async function removeItemAPI(key) {
+    console.log('🗑️ API Remove item:', key);
+    
+    try {
+        const response = await fetch('/cart/remove', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ key: key })
+        });
+        
+        const result = await response.json();
+        console.log('📡 Remove response:', result);
+        
+        if (response.ok) {
+            // Remove item from DOM with animation
+            const cartItem = document.querySelector(`[data-key="${key}"]`);
+            if (cartItem) {
+                cartItem.style.opacity = '0.5';
+                cartItem.style.transform = 'translateX(-20px)';
+                
+                setTimeout(() => {
+                    cartItem.remove();
+                    
+                    // Check if cart is empty
+                    if (document.querySelectorAll('.cart-item').length === 0) {
+                        location.reload();
+                    }
+                }, 300);
+            }
+            
+            // Update cart summary
+            if (result.cart_summary) {
+                updateCartSummary(result.cart_summary);
+            }
+        }
+        
+    } catch (error) {
+        console.error('❌ Remove error:', error);
+    }
+}
+
+async function clearCartAPI() {
+    console.log('🧹 API Clear cart');
+    
+    try {
+        const response = await fetch('/cart/clear', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            }
+        });
+        
+        const result = await response.json();
+        console.log('📡 Clear response:', result);
+        
+        if (response.ok) {
+            location.reload();
+        }
+        
+    } catch (error) {
+        console.error('❌ Clear error:', error);
+    }
+}
+
+function updateCartSummary(summary) {
+    console.log('💰 Updating cart summary:', summary);
+    
+    if (summary.subtotal !== undefined) {
+        const subtotalEl = document.getElementById('cart-subtotal');
+        if (subtotalEl) {
+            subtotalEl.textContent = new Intl.NumberFormat('vi-VN').format(summary.subtotal) + '₫';
+        }
+    }
+    
+    if (summary.total !== undefined) {
+        const totalEl = document.getElementById('cart-total');
+        if (totalEl) {
+            totalEl.textContent = new Intl.NumberFormat('vi-VN').format(summary.total) + '₫';
+        }
+    }
+    
+    if (summary.tax !== undefined) {
+        const taxEl = document.getElementById('cart-tax');
+        if (taxEl) {
+            taxEl.textContent = new Intl.NumberFormat('vi-VN').format(summary.tax) + '₫';
+        }
+    }
+    
+    if (summary.total_items !== undefined) {
+        const countEl = document.getElementById('cart-count');
+        if (countEl) {
+            countEl.textContent = `(${summary.total_items} sản phẩm)`;
+        }
+    }
+}
+
+// Functions for checkout
+function proceedToCheckout() {
+    // Redirect to checkout page
+    window.location.href = '/checkout';
+}
+
+function saveForLater() {
+    console.log('Chức năng lưu giỏ hàng đang được phát triển!');
+}
+
+console.log('✅ Cart functions loaded with onclick handlers - No duplicate listeners');
 </script>
 @endpush

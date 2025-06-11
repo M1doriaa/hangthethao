@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Product;
 
 class CategoryController extends Controller
 {
@@ -23,13 +24,36 @@ class CategoryController extends Controller
         }
 
         $categoryName = $categories[$category];
-        $products = $this->getProductsByCategory($category);
+        
+        // Lấy sản phẩm từ database thay vì dữ liệu mẫu
+        $products = $this->getProductsFromDatabase($category);
 
         return view('categories.index', compact('products', 'categoryName', 'category'));
+    }    /**
+     * Lấy sản phẩm từ database theo danh mục
+     */
+    private function getProductsFromDatabase($category)
+    {
+        return Product::active()
+            ->byCategory($category)
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($product) {
+                return [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'price' => $product->price,
+                    'rating' => $product->rating,
+                    'image' => $product->main_image,
+                    'stock_quantity' => $product->stock_quantity,
+                    'description' => $product->description,
+                    'formatted_price' => $product->formatted_price
+                ];
+            })->toArray();
     }
 
     /**
-     * Lấy sản phẩm theo danh mục (demo data)
+     * Lấy sản phẩm theo danh mục (demo data - giữ lại để backup)
      */
     private function getProductsByCategory($category)
     {
@@ -251,9 +275,7 @@ class CategoryController extends Controller
         }
 
         return $products;
-    }
-
-    /**
+    }    /**
      * Tìm kiếm sản phẩm
      */
     public function search(Request $request)
@@ -265,18 +287,34 @@ class CategoryController extends Controller
             return redirect()->route('home')->with('error', 'Vui lòng nhập từ khóa tìm kiếm');
         }
 
-        // Get all products from all categories
-        $allProducts = array_merge(
-            $this->getProductsByCategory('ao-clb'),
-            $this->getProductsByCategory('ao-doi-tuyen'),
-            $this->getProductsByCategory('phu-kien')
-        );
+        // Tìm kiếm sản phẩm từ database
+        $productQuery = Product::active()
+            ->where(function ($q) use ($query) {
+                $q->where('name', 'like', '%' . $query . '%')
+                  ->orWhere('description', 'like', '%' . $query . '%')
+                  ->orWhere('sku', 'like', '%' . $query . '%');
+            });
 
-        // Filter products based on search query
-        $products = collect($allProducts)->filter(function ($product) use ($query) {
-            return stripos($product['name'], $query) !== false || 
-                   stripos($product['description'], $query) !== false;
-        })->values()->all();
+        // Lọc theo danh mục nếu được chỉ định
+        if ($category !== 'all') {
+            $productQuery->byCategory($category);
+        }
+
+        $products = $productQuery
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($product) {
+                return [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'price' => $product->price,
+                    'rating' => $product->rating,
+                    'image' => $product->main_image,
+                    'stock_quantity' => $product->stock_quantity,
+                    'description' => $product->description,
+                    'formatted_price' => $product->formatted_price
+                ];
+            })->toArray();
 
         return view('categories.search', compact('products', 'query', 'category'));
     }

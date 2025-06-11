@@ -348,14 +348,50 @@ function buyNow() {
     const productData = getProductData();
     if (!validateProductSelection(productData)) return;
     
-    // Simulate buy now process
-    showNotification('Chuyển hướng đến trang thanh toán...', 'info');
+    // Show loading state
+    const buyButton = document.querySelector('.btn-buy-now');
+    const originalText = buyButton.innerHTML;
+    buyButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Đang xử lý...';
+    buyButton.disabled = true;
     
-    // In real application, redirect to checkout
-    setTimeout(() => {
-        // window.location.href = '/checkout';
-        console.log('Redirect to checkout with:', productData);
-    }, 1500);
+    // Add product to cart first
+    addToCartForCheckout(productData).then((success) => {
+        if (success) {
+            // Show notification
+            showNotification('Chuyển hướng đến trang thanh toán...', 'info');
+            
+            // Redirect to checkout
+            setTimeout(() => {
+                window.location.href = '/checkout';
+            }, 800);
+        } else {
+            // Restore button state on error
+            buyButton.innerHTML = originalText;
+            buyButton.disabled = false;
+        }
+    });
+}
+
+// Helper function to add product to cart before checkout
+async function addToCartForCheckout(productData) {
+    try {
+        const response = await fetch('/cart/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': window.csrfToken,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(productData)
+        });
+        
+        const result = await response.json();
+        return response.ok && result.success;
+    } catch (error) {
+        console.error('Error adding to cart for checkout:', error);
+        showNotification('Có lỗi xảy ra. Vui lòng thử lại!', 'error');
+        return false;
+    }
 }
 
 function getProductData() {

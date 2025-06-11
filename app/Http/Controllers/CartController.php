@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\Product;
 
 class CartController extends Controller
 {
@@ -16,7 +17,10 @@ class CartController extends Controller
         $cartItems = $this->getCartItems();
         $cartSummary = $this->calculateCartSummary($cartItems);
         
-        return view('cart.index', compact('cartItems', 'cartSummary'));
+        // Lấy sản phẩm gợi ý từ database
+        $recommendedProducts = $this->getRecommendedProducts();
+        
+        return view('cart.index', compact('cartItems', 'cartSummary', 'recommendedProducts'));
     }
       /**
      * Thêm sản phẩm vào giỏ hàng (API)
@@ -202,13 +206,26 @@ class CartController extends Controller
 
     /**
      * Tính tổng giá trị giỏ hàng
-     */
-    private function calculateCartTotal($cart)
+     */    private function calculateCartTotal($cart)
     {
         $total = 0;
         foreach ($cart as $item) {
             $total += $item['price'] * $item['quantity'];
         }
         return $total;
+    }
+
+    /**
+     * Lấy sản phẩm gợi ý từ database
+     */
+    private function getRecommendedProducts()
+    {
+        // Lấy 6 sản phẩm nổi bật hoặc mới nhất để gợi ý
+        return Product::active()
+            ->where('is_featured', true)
+            ->orWhere('created_at', '>=', now()->subDays(30))
+            ->inRandomOrder()
+            ->limit(6)
+            ->get();
     }
 }

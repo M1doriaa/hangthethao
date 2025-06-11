@@ -8,6 +8,7 @@
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">    <!-- Custom CSS -->
     <link href="{{ asset('css/app.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/cart.css') }}" rel="stylesheet">
     
     @stack('styles')
     
@@ -263,12 +264,11 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     
-    <!-- Cart JavaScript - Load on all pages -->
-    <script src="{{ asset('js/cart.js') }}"></script>
-    
-    @if(config('app.debug'))
-        <!-- Demo script for development -->
-        <script src="{{ asset('js/demo-cart.js') }}"></script>
+    <!-- Cart JavaScript - Commented out to avoid conflicts with inline cart scripts -->
+    <!-- <script src="{{ asset('js/cart.js') }}"></script> -->
+      @if(config('app.debug'))
+        <!-- Demo script for development - Commented out to avoid conflicts -->
+        <!-- <script src="{{ asset('js/demo-cart.js') }}"></script> -->
     @endif
     
     @stack('scripts')

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Checkout Button</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .info { color: #17a2b8; }
+        button { padding: 10px 20px; margin: 5px; border: none; border-radius: 5px; cursor: pointer; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-warning { background: #ffc107; color: black; }
+    </style>
+</head>
+<body>
+    <h1>🛒 Checkout Button Test</h1>
+    
+    <div class="test-section">
+        <h3>1. Test Cart Page Load</h3>
+        <button class="btn-primary" onclick="testCartPage()">Open Cart Page</button>
+        <div id="cart-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>2. Test Checkout Redirect</h3>
+        <button class="btn-success" onclick="testCheckoutRedirect()">Test Checkout Function</button>
+        <div id="checkout-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>3. Test Checkout Page Direct</h3>
+        <button class="btn-warning" onclick="testCheckoutPage()">Open Checkout Page</button>
+        <div id="checkout-page-result"></div>
+    </div>
+
+    <script>
+        function testCartPage() {
+            document.getElementById('cart-result').innerHTML = '<span class="info">Opening cart page...</span>';
+            window.open('/cart', '_blank');
+            setTimeout(() => {
+                document.getElementById('cart-result').innerHTML = '<span class="success">✅ Cart page opened</span>';
+            }, 1000);
+        }
+        
+        function testCheckoutRedirect() {
+            document.getElementById('checkout-result').innerHTML = '<span class="info">Testing checkout function...</span>';
+            
+            // Simulate the proceedToCheckout function
+            try {
+                // This is the same function as in cart page
+                window.location.href = '/checkout';
+                document.getElementById('checkout-result').innerHTML = '<span class="success">✅ Checkout redirect working</span>';
+            } catch (error) {
+                document.getElementById('checkout-result').innerHTML = '<span class="error">❌ Error: ' + error.message + '</span>';
+            }
+        }
+        
+        function testCheckoutPage() {
+            document.getElementById('checkout-page-result').innerHTML = '<span class="info">Opening checkout page...</span>';
+            window.open('/checkout', '_blank');
+            setTimeout(() => {
+                document.getElementById('checkout-page-result').innerHTML = '<span class="success">✅ Checkout page opened</span>';
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

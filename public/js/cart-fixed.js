@@ -28,9 +28,6 @@ function setupCSRFToken() {
     const token = document.querySelector('meta[name="csrf-token"]');
     if (token) {
         window.csrfToken = token.getAttribute('content');
-        console.log('✅ CSRF token set up');
-    } else {
-        console.error('❌ CSRF token not found');
     }
 }
 
@@ -44,20 +41,7 @@ function initCartPage() {
         console.log('- Quantity inputs:', document.querySelectorAll('.quantity-input').length);
         console.log('- Quantity buttons:', document.querySelectorAll('.quantity-btn').length); 
         console.log('- Remove buttons:', document.querySelectorAll('.remove-item-btn').length);
-        console.log('- Alternative remove buttons:', document.querySelectorAll('.remove-btn').length);
         console.log('- Clear cart button:', !!document.getElementById('clear-cart-btn'));
-        
-        // Debug all cart items
-        const cartItems = document.querySelectorAll('.cart-item');
-        console.log(`📦 Found ${cartItems.length} cart items`);
-        cartItems.forEach((item, index) => {
-            console.log(`Cart item ${index}:`, {
-                element: item,
-                dataKey: item.dataset.key,
-                removeBtn: item.querySelector('.remove-item-btn'),
-                quantityInput: item.querySelector('.quantity-input')
-            });
-        });
         
         // Initialize quantity controls
         initQuantityControls();
@@ -68,19 +52,7 @@ function initCartPage() {
         // Initialize clear cart button
         initClearCartButton();
         
-        // Add manual testing functions to window
-        window.testRemoveFunction = function(key) {
-            console.log('🧪 Testing remove function manually for key:', key);
-            removeCartItem(key);
-        };
-        
-        window.testClearFunction = function() {
-            console.log('🧪 Testing clear function manually');
-            clearCart();
-        };
-        
         console.log('✅ Cart page initialization complete');
-        console.log('💡 You can test manually with: testRemoveFunction("key") or testClearFunction()');
     }, 100);
 }
 
@@ -123,29 +95,12 @@ function initRemoveButtons() {
     const removeButtons = document.querySelectorAll('.remove-item-btn');
     
     console.log(`🗑️ Found ${removeButtons.length} remove buttons`);
-    console.log('Remove buttons:', removeButtons);
     
-    // Also check for alternative selectors
-    const removeButtonsAlt = document.querySelectorAll('.remove-btn');
-    console.log(`🔍 Alternative remove buttons (.remove-btn): ${removeButtonsAlt.length}`);
-    
-    // Check for buttons with trash icons
-    const trashButtons = document.querySelectorAll('button i.fa-trash');
-    console.log(`🔍 Buttons with trash icons: ${trashButtons.length}`);
-    
-    removeButtons.forEach((btn, index) => {
-        console.log(`🔗 Binding click event to remove button ${index}:`, {
-            key: btn.dataset.key,
-            name: btn.dataset.name,
-            element: btn
-        });
-        
-        btn.addEventListener('click', function(event) {
-            event.preventDefault();
-            event.stopPropagation();
-            
+    removeButtons.forEach(btn => {
+        console.log('🔗 Binding click event to remove button:', btn.dataset.key);
+        btn.addEventListener('click', function() {
             const key = this.dataset.key;
-            const productName = this.dataset.name || 'sản phẩm';
+            const productName = this.dataset.name;
             
             console.log('🖱️ Remove button clicked:', key, productName);
             
@@ -157,65 +112,21 @@ function initRemoveButtons() {
             }
         });
     });
-    
-    // Also add event listeners to alternative buttons if they exist
-    removeButtonsAlt.forEach((btn, index) => {
-        if (!btn.classList.contains('remove-item-btn')) { // Avoid duplicate listeners
-            console.log(`🔗 Binding click event to alternative remove button ${index}`);
-            btn.addEventListener('click', function(event) {
-                event.preventDefault();
-                event.stopPropagation();
-                
-                const key = this.dataset.key || this.getAttribute('data-key');
-                const productName = this.dataset.name || this.getAttribute('data-name') || 'sản phẩm';
-                
-                console.log('🖱️ Alternative remove button clicked:', key, productName);
-                
-                if (key && confirm(`Bạn có chắc muốn xóa "${productName}" khỏi giỏ hàng?`)) {
-                    console.log('✅ User confirmed removal');
-                    removeCartItem(key);
-                } else if (!key) {
-                    console.error('❌ No key found for remove button');
-                } else {
-                    console.log('❌ User cancelled removal');
-                }
-            });
-        }
-    });
 }
 
 function initClearCartButton() {
     const clearBtn = document.getElementById('clear-cart-btn');
     console.log('🧹 Clear cart button found:', !!clearBtn);
-    console.log('Clear cart button element:', clearBtn);
-    
-    // Also check for alternative selectors
-    const clearBtnAlt = document.querySelector('[id*="clear"]');
-    console.log('🔍 Alternative clear button:', clearBtnAlt);
     
     if (clearBtn) {
         console.log('🔗 Binding click event to clear cart button');
-        clearBtn.addEventListener('click', function(event) {
-            event.preventDefault();
-            event.stopPropagation();
-            
+        clearBtn.addEventListener('click', function() {
             console.log('🖱️ Clear cart button clicked');
             if (confirm('Bạn có chắc muốn xóa toàn bộ giỏ hàng?')) {
                 console.log('✅ User confirmed clear cart');
                 clearCart();
             } else {
                 console.log('❌ User cancelled clear cart');
-            }
-        });
-    } else {
-        console.warn('⚠️ Clear cart button not found!');
-        
-        // Try to find it by other methods
-        const clearButtons = document.querySelectorAll('button');
-        clearButtons.forEach((btn, index) => {
-            const text = btn.textContent.toLowerCase();
-            if (text.includes('xóa toàn bộ') || text.includes('clear') || text.includes('xóa hết')) {
-                console.log(`🔍 Found potential clear button ${index}:`, btn);
             }
         });
     }
@@ -262,7 +173,6 @@ async function updateCartItemQuantity(key, quantity) {
 }
 
 async function removeCartItem(key) {
-    console.log('🗑️ Starting removal of cart item:', key);
     try {
         const response = await fetch('/cart/remove', {
             method: 'POST',
@@ -276,43 +186,28 @@ async function removeCartItem(key) {
             })
         });
         
-        console.log('📡 Remove API Response status:', response.status);
         const result = await response.json();
-        console.log('📡 Remove API Response data:', result);
         
         if (response.ok) {
-            console.log('✅ Item removed successfully from backend');
-            
             // Remove item from DOM
             const cartItem = document.querySelector(`[data-key="${key}"]`).closest('.cart-item');
             if (cartItem) {
-                console.log('🎬 Starting removal animation');
                 cartItem.style.animation = 'slideOutLeft 0.3s ease';
                 setTimeout(() => {
                     cartItem.remove();
-                    console.log('🗑️ Item removed from DOM');
                     
                     // Check if cart is empty
-                    const remainingItems = document.querySelectorAll('.cart-item');
-                    console.log('Remaining items:', remainingItems.length);
-                    if (remainingItems.length === 0) {
-                        console.log('🔄 Cart is empty, reloading page');
+                    if (document.querySelectorAll('.cart-item').length === 0) {
                         location.reload(); // Reload to show empty cart message
                     }
                 }, 300);
-            } else {
-                console.error('❌ Could not find cart item in DOM');
             }
             
             // Update cart summary
-            if (result.cart_summary) {
-                updateCartSummary(result.cart_summary);
-            }
+            updateCartSummary(result.cart_summary);
             
             // Update cart counter
-            if (result.cart_count !== undefined) {
-                updateCartCounter(result.cart_count);
-            }
+            updateCartCounter(result.cart_count);
             
             // Show success notification
             showSimpleNotification('Đã xóa sản phẩm khỏi giỏ hàng!', 'success');
@@ -320,13 +215,12 @@ async function removeCartItem(key) {
             throw new Error(result.message || 'Có lỗi xảy ra');
         }
     } catch (error) {
-        console.error('❌ Error removing item:', error);
+        console.error('Error removing item:', error);
         showSimpleNotification('Có lỗi xảy ra khi xóa sản phẩm!', 'error');
     }
 }
 
 async function clearCart() {
-    console.log('🧹 Starting clear cart operation');
     try {
         const response = await fetch('/cart/clear', {
             method: 'POST',
@@ -337,19 +231,16 @@ async function clearCart() {
             }
         });
         
-        console.log('📡 Clear cart API Response status:', response.status);
         const result = await response.json();
-        console.log('📡 Clear cart API Response data:', result);
         
         if (response.ok) {
-            console.log('✅ Cart cleared successfully');
             // Reload page to show empty cart
             location.reload();
         } else {
             throw new Error(result.message || 'Có lỗi xảy ra');
         }
     } catch (error) {
-        console.error('❌ Error clearing cart:', error);
+        console.error('Error clearing cart:', error);
         showSimpleNotification('Có lỗi xảy ra khi xóa giỏ hàng!', 'error');
     }
 }
@@ -391,7 +282,7 @@ function updateCartSummary(summary) {
     // Update shipping
     const shippingEl = document.getElementById('cart-shipping');
     if (shippingEl && summary.shipping !== undefined) {
-        shippingEl.innerHTML = summary.shipping === 0 ? '<span class="text-success">Miễn phí</span>' : formatPrice(summary.shipping);
+        shippingEl.textContent = summary.shipping === 0 ? 'Miễn phí' : formatPrice(summary.shipping);
     }
     
     // Update tax
@@ -414,7 +305,10 @@ function updateCartSummary(summary) {
 }
 
 function formatPrice(price) {
-    return new Intl.NumberFormat('vi-VN').format(price) + '₫';
+    return new Intl.NumberFormat('vi-VN', {
+        style: 'currency',
+        currency: 'VND'
+    }).format(price);
 }
 
 function showSimpleNotification(message, type = 'info') {

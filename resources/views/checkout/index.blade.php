@@ -360,15 +360,26 @@
                     <h5 class="section-header">
                         <i class="fas fa-shopping-bag me-2"></i>Đơn hàng của bạn
                     </h5>
-                    <div class="section-content">
-                        <!-- Danh sách sản phẩm -->
-                        @foreach($cartItems as $item)
+                    <div class="section-content">                        <!-- Danh sách sản phẩm -->
+                        @foreach($cartItems as $key => $item)
                         <div class="product-item">
-                            <img src="{{ $item['image'] }}" alt="{{ $item['name'] }}" class="product-image">
+                            <img src="{{ $item['image'] ?? 'https://via.placeholder.com/80x80?text=Product' }}" 
+                                 alt="{{ $item['name'] }}" 
+                                 class="product-image">
                             <div class="product-info">
                                 <div class="product-name">{{ $item['name'] }}</div>
-                                <div class="product-size">Kích thước: {{ $item['size'] }}</div>
-                                <div class="product-price">{{ number_format($item['price']) }}₫</div>
+                                @if(isset($item['size']) && $item['size'])
+                                    <div class="product-size">Kích thước: {{ $item['size'] }}</div>
+                                @endif
+                                @if(isset($item['color']) && $item['color'])
+                                    <div class="product-color">Màu sắc: {{ $item['color'] }}</div>
+                                @endif
+                                <div class="product-price">
+                                    {{ number_format($item['price']) }}₫ 
+                                    @if($item['quantity'] > 1)
+                                        x {{ $item['quantity'] }}
+                                    @endif
+                                </div>
                             </div>
                         </div>
                         @endforeach
