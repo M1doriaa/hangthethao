@@ -127,8 +127,8 @@
                 <div class="row align-items-center">
                     <div class="col-md-6">
                         <div class="contact-info">
-                            <i class="fas fa-phone text-danger me-2"></i>0924 85 03 503
-                            <i class="fas fa-envelope text-danger ms-3 me-2"></i>hangthethao@gmail.com
+                            <i class="fas fa-phone text-danger me-2"></i>0849 84 48 85
+                            <i class="fas fa-envelope text-danger ms-3 me-2"></i>jklamn666@gmail.com
                         </div>
                     </div>
                     <div class="col-md-6 text-end">
@@ -146,7 +146,7 @@
         <nav class="navbar navbar-expand-lg navbar-light">
             <div class="container">
                 <a class="navbar-brand text-danger" href="{{ route('home') }}">
-                    <strong>HANG</strong>THE THAO
+                    HANG THE THAO
                 </a>
                 
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -214,7 +214,7 @@
         <div class="container">
             <div class="row">
                 <div class="col-lg-4 mb-4">
-                    <h5 class="text-danger mb-3">HANG THE THAO</h5>
+                    <h5 class="text-danger mb-3"> HANG THE THAO</h5>
                     <p>Cửa hàng thể thao uy tín, chuyên cung cấp các sản phẩm thể thao chất lượng cao với giá cả phải chăng.</p>
                     <div class="social-links">
                         <a href="#"><i class="fab fa-facebook"></i></a>
@@ -228,8 +228,6 @@
                     <ul class="list-unstyled">
                         <li><a href="#" class="text-light text-decoration-none">Đồ bóng đá</a></li>
                         <li><a href="#" class="text-light text-decoration-none">Phụ kiện</a></li>
-                        <li><a href="#" class="text-light text-decoration-none">Đồ bóng rổ</a></li>
-                        <li><a href="#" class="text-light text-decoration-none">Giày thể thao</a></li>
                     </ul>
                 </div>
                 <div class="col-lg-3 mb-4">
@@ -244,8 +242,8 @@
                 <div class="col-lg-3 mb-4">
                     <h6>Liên hệ</h6>
                     <ul class="list-unstyled">
-                        <li><i class="fas fa-phone me-2"></i>0924 85 03 503</li>
-                        <li><i class="fas fa-envelope me-2"></i>hangthethao@gmail.com</li>
+                        <li><i class="fas fa-phone me-2"></i>0849 84 48 85</li>
+                        <li><i class="fas fa-envelope me-2"></i>jklamn666@gmail.com</li>
                         <li><i class="fas fa-map-marker-alt me-2"></i>Hà Nội, Việt Nam</li>
                     </ul>
                 </div>

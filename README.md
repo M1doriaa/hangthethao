@@ -2,6 +2,44 @@
 
 > Modern sports e-commerce platform built with Laravel 12, featuring complete order management system and shopping cart functionality.
 
+## 🚀 Quick Start
+
+### Automatic Installation (Recommended)
+
+**Nix (NixOS/Nix Package Manager):**
+```bash
+git clone https://github.com/M1doriaa/hangthethao.git
+cd hangthethao
+chmod +x install-nix.sh
+./install-nix.sh
+
+# Khởi động server
+nix develop -c php artisan serve
+```
+
+**Linux/macOS:**
+```bash
+git clone https://github.com/M1doriaa/hangthethao.git
+cd hangthethao
+chmod +x install.sh
+./install.sh
+```
+
+**Windows:**
+```cmd
+git clone https://github.com/M1doriaa/hangthethao.git
+cd hangthethao
+install.bat
+```
+
+### Manual Installation
+📖 For detailed installation guide, see [INSTALLATION.md](INSTALLATION.md)
+
+### Access the Application
+- **Website**: http://localhost:8000
+- **Admin Panel**: http://localhost:8000/admin
+- **Admin Login**: admin@hangthethao.com / password
+
 ## 🌟 Key Features
 
 ### 🛒 **Complete E-commerce System**

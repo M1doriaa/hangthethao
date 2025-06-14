@@ -7,15 +7,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Product extends Model
 {
-    use HasFactory;
-
-    protected $fillable = [
+    use HasFactory;    protected $fillable = [
         'name',
         'description',
         'price',
         'original_price',
         'sku',
-        'category',
+        'category_id',  // Sử dụng category_id thay vì category
+        'category',     // Giữ category slug để backward compatibility
         'brand',
         'images',
         'sizes',
@@ -85,16 +84,33 @@ class Product extends Model
     public function scopeFeatured($query)
     {
         return $query->where('is_featured', true);
-    }    // Relationship with category
+    }    // Relationship with category (sử dụng category_id)
     public function categoryModel()
+    {
+        return $this->belongsTo(Category::class, 'category_id');
+    }
+
+    // Legacy relationship with category slug (để backward compatibility)
+    public function categoryBySlug()
     {
         return $this->belongsTo(Category::class, 'category', 'slug');
     }
 
-    // Scope for category
-    public function scopeByCategory($query, $category)
+    // Scope for category by ID
+    public function scopeByCategory($query, $categorySlugOrId)
     {
-        return $query->where('category', $category);
+        // Nếu là string, tìm theo slug
+        if (is_string($categorySlugOrId)) {
+            $category = Category::where('slug', $categorySlugOrId)->first();
+            if ($category) {
+                return $query->where('category_id', $category->id);
+            }
+            // Fallback: tìm theo category field (slug)
+            return $query->where('category', $categorySlugOrId);
+        }
+        
+        // Nếu là number, tìm theo category_id
+        return $query->where('category_id', $categorySlugOrId);
     }
 
     // Method to generate slug

@@ -105,9 +105,16 @@ class ProductController extends Controller
                 $images[] = '/storage/' . $imagePath;
             }
         }
+          // Set images array
+        $validated['images'] = $images;
         
-        // Set images array
-        $validated['images'] = $images;        Product::create($validated);
+        // Lấy category_id từ category slug
+        $category = Category::where('slug', $validated['category'])->first();
+        if ($category) {
+            $validated['category_id'] = $category->id;
+        }
+        
+        Product::create($validated);
 
         return redirect()->route('admin.products.index')
                         ->with('success', 'Sản phẩm "' . $validated['name'] . '" đã được tạo thành công với ' . count($images) . ' ảnh!');
@@ -204,10 +211,16 @@ class ProductController extends Controller
         // If we have new images, update the images array
         if (!empty($newImages)) {
             $validated['images'] = $newImages;
+        }        // Clean up keep_images from validated data as it's not a model field
+        unset($validated['keep_images']);
+        
+        // Lấy category_id từ category slug
+        $category = Category::where('slug', $validated['category'])->first();
+        if ($category) {
+            $validated['category_id'] = $category->id;
         }
-
-        // Clean up keep_images from validated data as it's not a model field
-        unset($validated['keep_images']);        $product->update($validated);
+        
+        $product->update($validated);
 
         $imageCount = !empty($newImages) ? count($newImages) : count($product->images ?? []);
         return redirect()->route('admin.products.index')

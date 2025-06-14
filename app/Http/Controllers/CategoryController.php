@@ -318,4 +318,12 @@ class CategoryController extends Controller
 
         return view('categories.search', compact('products', 'query', 'category'));
     }
+
+    /**
+     * Hiển thị danh sách sản phẩm theo danh mục (alias cho index)
+     */
+    public function show($category)
+    {
+        return $this->index($category);
+    }
 }

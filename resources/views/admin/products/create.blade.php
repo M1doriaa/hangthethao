@@ -175,15 +175,16 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
-                    </div>                    <div class="row">
-                        <div class="col-md-6 mb-3">
+                    </div>                    <div class="row">                        <div class="col-md-6 mb-3">
                             <label for="category" class="form-label">Danh mục <span class="text-danger">*</span></label>
                             <select class="form-select @error('category') is-invalid @enderror" 
                                     id="category" name="category" required>
                                 <option value="">Chọn danh mục</option>
-                                <option value="football" {{ old('category') == 'football' ? 'selected' : '' }}>Áo CLB</option>
-                                <option value="national-team" {{ old('category') == 'national-team' ? 'selected' : '' }}>Áo Đội Tuyển</option>
-                                <option value="accessories" {{ old('category') == 'accessories' ? 'selected' : '' }}>Phụ Kiện</option>
+                                @foreach($categories as $category)
+                                    <option value="{{ $category->slug }}" {{ old('category') == $category->slug ? 'selected' : '' }}>
+                                        {{ $category->name }}
+                                    </option>
+                                @endforeach
                             </select>
                             @error('category')
                                 <div class="invalid-feedback">{{ $message }}</div>

@@ -36,10 +36,14 @@ class Category extends Model
     public function children()
     {
         return $this->hasMany(Category::class, 'parent_id');
+    }    // Relationship với products (primary relationship)
+    public function products()
+    {
+        return $this->hasMany(Product::class, 'category_id');
     }
 
-    // Relationship với products
-    public function products()
+    // Legacy relationship với products theo slug (để backward compatibility)
+    public function productsBySlug()
     {
         return $this->hasMany(Product::class, 'category', 'slug');
     }
