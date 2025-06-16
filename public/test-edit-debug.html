@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Edit Form Debug Functions</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { padding: 20px; }
+        .test-section { margin-bottom: 30px; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+        .console-output { background: #000; color: #0f0; padding: 10px; font-family: monospace; min-height: 100px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Test Edit Form Debug Functions</h2>
+        
+        <div class="test-section">
+            <h4>Mock Edit Form Elements</h4>
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="has_variants" name="has_variants">
+                <label class="form-check-label" for="has_variants">Sản phẩm có nhiều biến thể</label>
+            </div>
+            
+            <div id="variants-section" style="display: none;">
+                <h5>Chọn biến thể:</h5>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h6>Kích thước:</h6>
+                        <div class="form-check">
+                            <input class="form-check-input variant-size" type="checkbox" value="S" id="size_S">
+                            <label class="form-check-label" for="size_S">S</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input variant-size" type="checkbox" value="M" id="size_M">
+                            <label class="form-check-label" for="size_M">M</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input variant-size" type="checkbox" value="L" id="size_L">
+                            <label class="form-check-label" for="size_L">L</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Màu sắc:</h6>
+                        <div class="form-check">
+                            <input class="form-check-input variant-color" type="checkbox" value="Đỏ" id="color_red">
+                            <label class="form-check-label" for="color_red">Đỏ</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input variant-color" type="checkbox" value="Xanh" id="color_blue">
+                            <label class="form-check-label" for="color_blue">Xanh</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input variant-color" type="checkbox" value="Trắng" id="color_white">
+                            <label class="form-check-label" for="color_white">Trắng</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <button type="button" class="btn btn-secondary" id="generate-variants">Tạo bảng biến thể</button>
+                
+                <div id="variants-table-container" class="mt-3">
+                    <table class="table table-bordered" id="variants-table">
+                        <thead>
+                            <tr>
+                                <th>Kích thước</th>
+                                <th>Màu sắc</th>
+                                <th>Giá</th>
+                                <th>Tồn kho</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div id="simple-product-section">
+                <h5>Sản phẩm đơn giản</h5>
+                <p>This section shows when has_variants is unchecked</p>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h4>Test Console</h4>
+            <div class="console-output" id="console-output">Loading debug functions...</div>
+            <div class="mt-3">
+                <button class="btn btn-primary" onclick="runDebugEditForm()">Run debugEditForm()</button>
+                <button class="btn btn-success" onclick="runTestEditVariantGeneration()">Run testEditVariantGeneration()</button>
+                <button class="btn btn-warning" onclick="clearConsole()">Clear Console</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let consoleOutput = document.getElementById('console-output');
+        
+        function log(message) {
+            consoleOutput.innerHTML += '<div>' + message + '</div>';
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        }
+        
+        function clearConsole() {
+            consoleOutput.innerHTML = '';
+        }
+        
+        function runDebugEditForm() {
+            if (typeof window.debugEditForm === 'function') {
+                log('Running debugEditForm()...');
+                window.debugEditForm();
+            } else {
+                log('ERROR: debugEditForm() function not found!');
+            }
+        }
+        
+        function runTestEditVariantGeneration() {
+            if (typeof window.testEditVariantGeneration === 'function') {
+                log('Running testEditVariantGeneration()...');
+                window.testEditVariantGeneration();
+            } else {
+                log('ERROR: testEditVariantGeneration() function not found!');
+            }
+        }
+        
+        // Mock some basic functionality
+        document.getElementById('has_variants').addEventListener('change', function() {
+            const variantsSection = document.getElementById('variants-section');
+            const simpleSection = document.getElementById('simple-product-section');
+            
+            if (this.checked) {
+                variantsSection.style.display = 'block';
+                simpleSection.style.display = 'none';
+                log('Switched to variants mode');
+            } else {
+                variantsSection.style.display = 'none';
+                simpleSection.style.display = 'block';
+                log('Switched to simple mode');
+            }
+        });
+        
+        // Override console.log to show in our test console
+        const originalConsoleLog = console.log;
+        console.log = function(...args) {
+            originalConsoleLog.apply(console, arguments);
+            log(args.join(' '));
+        };
+        
+        const originalConsoleError = console.error;
+        console.error = function(...args) {
+            originalConsoleError.apply(console, arguments);
+            log('ERROR: ' + args.join(' '));
+        };
+        
+        // Define the debug functions here (copied from edit form)
+        window.debugEditForm = function() {
+            console.log('=== DEBUGGING EDIT FORM ===');
+            
+            const elements = {
+                hasVariantsCheckbox: document.getElementById('has_variants'),
+                generateVariantsBtn: document.getElementById('generate-variants'),
+                variantsTableContainer: document.getElementById('variants-table-container'),
+                variantsSection: document.getElementById('variants-section'),
+                simpleProductSection: document.getElementById('simple-product-section')
+            };
+            
+            console.log('Elements found:');
+            Object.entries(elements).forEach(([key, element]) => {
+                console.log(`  ${key}:`, !!element, element ? element.tagName : 'NOT FOUND');
+            });
+            
+            // Check checkboxes
+            const sizeCheckboxes = document.querySelectorAll('.variant-size');
+            const colorCheckboxes = document.querySelectorAll('.variant-color');
+            console.log('Variant options:');
+            console.log(`  Sizes: ${sizeCheckboxes.length}`);
+            console.log(`  Colors: ${colorCheckboxes.length}`);
+            
+            // Check existing variants
+            const existingVariants = document.querySelectorAll('#variants-table tbody tr');
+            console.log(`Existing variants: ${existingVariants.length}`);
+            
+            return elements;
+        };
+
+        window.testEditVariantGeneration = function() {
+            console.log('=== TESTING VARIANT GENERATION IN EDIT ===');
+            
+            // Check if variants section is visible
+            const hasVariants = document.getElementById('has_variants');
+            if (hasVariants && !hasVariants.checked) {
+                console.log('Enabling has_variants...');
+                hasVariants.checked = true;
+                hasVariants.dispatchEvent(new Event('change'));
+            }
+            
+            // Select some sizes and colors
+            const firstSize = document.querySelector('.variant-size');
+            const secondSize = document.querySelectorAll('.variant-size')[1];
+            const firstColor = document.querySelector('.variant-color');
+            const secondColor = document.querySelectorAll('.variant-color')[1];
+            
+            if (firstSize) {
+                firstSize.checked = true;
+                console.log('Selected size:', firstSize.value);
+            }
+            if (secondSize) {
+                secondSize.checked = true;
+                console.log('Selected size:', secondSize.value);
+            }
+            if (firstColor) {
+                firstColor.checked = true;
+                console.log('Selected color:', firstColor.value);
+            }
+            if (secondColor) {
+                secondColor.checked = true;
+                console.log('Selected color:', secondColor.value);
+            }
+            
+            // Click generate button
+            setTimeout(() => {
+                const generateBtn = document.getElementById('generate-variants');
+                if (generateBtn) {
+                    console.log('Clicking generate variants button...');
+                    generateBtn.click();
+                } else {
+                    console.error('Generate variants button not found!');
+                }
+            }, 1000);
+        };
+        
+        // Mock generateVariantsTable function
+        window.generateVariantsTable = function() {
+            console.log('Mock generateVariantsTable() called');
+            const tbody = document.querySelector('#variants-table tbody');
+            tbody.innerHTML = '<tr><td>S</td><td>Đỏ</td><td><input type="text" value="100,000" class="form-control"></td><td><input type="number" value="10" class="form-control"></td><td><button class="btn btn-sm btn-danger">Xóa</button></td></tr>';
+            console.log('Mock variant row generated');
+        };
+        
+        // Mock generate button click
+        document.getElementById('generate-variants').addEventListener('click', function() {
+            console.log('Generate variants button clicked');
+            if (typeof window.generateVariantsTable === 'function') {
+                window.generateVariantsTable();
+            }
+        });
+        
+        setTimeout(() => {
+            console.log('=== TEST DEBUG FUNCTIONS READY ===');
+            console.log('Run debugEditForm() to check elements');
+            console.log('Run testEditVariantGeneration() to test variant generation');
+        }, 1000);
+    </script>
+</body>
+</html>

@@ -13,16 +13,17 @@ class ProductController extends Controller
 {
     /**
      * Display a listing of the resource.
-     */
-    public function index(Request $request)
+     */    public function index(Request $request)
     {
         $query = Product::query();
 
         // Search functionality
         if ($request->has('search') && $request->search) {
-            $query->where('name', 'like', '%' . $request->search . '%')
+            $query->where(function($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->search . '%')
                   ->orWhere('sku', 'like', '%' . $request->search . '%')
                   ->orWhere('category', 'like', '%' . $request->search . '%');
+            });
         }
 
         // Category filter
@@ -34,6 +35,15 @@ class ProductController extends Controller
         if ($request->has('status') && $request->status) {
             $query->where('status', $request->status);
         }
+
+        // Debug logging
+        \Log::info('Product filter query:', [
+            'search' => $request->search,
+            'category' => $request->category,
+            'status' => $request->status,
+            'sql' => $query->toSql(),
+            'bindings' => $query->getBindings()
+        ]);
 
         $products = $query->latest()->paginate(20);
         $categories = Category::active()->orderBy('name')->pluck('name', 'slug');
@@ -50,10 +60,17 @@ class ProductController extends Controller
         return view('admin.products.create', compact('categories'));
     }    /**
      * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+     */    public function store(Request $request)
     {
-        $validated = $request->validate([
+        // Log request data for debugging
+        \Log::info('Product store request:', [
+            'has_variants' => $request->has_variants,
+            'variants_count' => $request->has('variants') ? count($request->variants ?? []) : 0,
+            'request_all' => $request->all()
+        ]);
+
+        // Validate base product fields first
+        $baseRules = [
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'price' => 'required|numeric|min:0',
@@ -61,9 +78,6 @@ class ProductController extends Controller
             'sku' => 'required|string|unique:products,sku',
             'category' => 'required|string',
             'brand' => 'nullable|string|max:255',
-            'stock_quantity' => 'required|integer|min:0',
-            'sizes' => 'nullable|array',
-            'colors' => 'nullable|array',
             'is_featured' => 'boolean',
             'is_active' => 'boolean',
             'status' => 'required|string|in:active,inactive,out_of_stock',
@@ -73,7 +87,36 @@ class ProductController extends Controller
             'main_image' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
             'additional_images' => 'nullable|array|max:5',
             'additional_images.*' => 'image|mimes:jpeg,png,jpg,webp|max:2048',
-        ]);
+            // Variant support
+            'has_variants' => 'nullable|boolean',
+        ];
+
+        // Add conditional validation based on product type
+        if ($request->has_variants) {
+            // For variant products
+            $baseRules['variants'] = 'required|array|min:1';
+            $baseRules['variants.*.size'] = 'nullable|string|max:50';
+            $baseRules['variants.*.color'] = 'nullable|string|max:50';
+            $baseRules['variants.*.color_code'] = 'nullable|string|max:7';
+            $baseRules['variants.*.price'] = 'required|numeric|min:0';
+            $baseRules['variants.*.sale_price'] = 'nullable|numeric|min:0';
+            $baseRules['variants.*.stock_quantity'] = 'required|integer|min:0';
+            $baseRules['variants.*.sku'] = 'nullable|string|max:100';
+            $baseRules['variants.*.is_active'] = 'nullable|boolean';
+        } else {
+            // For simple products
+            $baseRules['stock_quantity'] = 'required|integer|min:0';
+        }
+
+        try {
+            $validated = $request->validate($baseRules);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Validation failed:', [
+                'errors' => $e->errors(),
+                'request_data' => $request->all()
+            ]);
+            throw $e;
+        }
 
         // Generate slug
         $validated['slug'] = Str::slug($validated['name']);
@@ -104,8 +147,7 @@ class ProductController extends Controller
                 $imagePath = $image->storeAs('products', $imageName, 'public');
                 $images[] = '/storage/' . $imagePath;
             }
-        }
-          // Set images array
+        }        // Set images array
         $validated['images'] = $images;
         
         // Lấy category_id từ category slug
@@ -113,11 +155,53 @@ class ProductController extends Controller
         if ($category) {
             $validated['category_id'] = $category->id;
         }
-        
-        Product::create($validated);
+          // Tạo sản phẩm
+        try {
+            $product = Product::create($validated);
+            \Log::info('Product created successfully:', ['id' => $product->id, 'name' => $product->name]);
+        } catch (\Exception $e) {
+            \Log::error('Failed to create product:', [
+                'error' => $e->getMessage(),
+                'validated_data' => $validated
+            ]);
+            throw $e;
+        }
 
-        return redirect()->route('admin.products.index')
-                        ->with('success', 'Sản phẩm "' . $validated['name'] . '" đã được tạo thành công với ' . count($images) . ' ảnh!');
+        // Nếu sản phẩm có variants, tạo các variants
+        if ($request->has_variants && $request->filled('variants')) {
+            \Log::info('Creating variants for product:', ['product_id' => $product->id, 'variants_count' => count($request->variants)]);
+            
+            foreach ($request->variants as $index => $variantData) {
+                try {
+                    $variantData['product_id'] = $product->id;
+                    $variantData['is_active'] = $variantData['is_active'] ?? true;
+                    
+                    // Tạo SKU cho variant nếu không có
+                    if (empty($variantData['sku'])) {
+                        $sizePart = !empty($variantData['size']) ? strtoupper($variantData['size']) : '';
+                        $colorPart = !empty($variantData['color']) ? strtoupper(str_replace(' ', '', $variantData['color'])) : '';
+                        $variantData['sku'] = $product->sku . ($sizePart ? '-' . $sizePart : '') . ($colorPart ? '-' . $colorPart : '');
+                    }
+                    
+                    $variant = \App\Models\ProductVariant::create($variantData);
+                    \Log::info("Variant {$index} created:", ['id' => $variant->id, 'sku' => $variant->sku]);
+                } catch (\Exception $e) {
+                    \Log::error("Failed to create variant {$index}:", [
+                        'error' => $e->getMessage(),
+                        'variant_data' => $variantData
+                    ]);
+                    throw $e;
+                }
+            }
+        }        $variantCount = $request->has_variants && $request->filled('variants') ? count($request->variants) : 0;
+        $imageCount = count($images);
+        
+        $successMessage = "Sản phẩm \"{$validated['name']}\" đã được tạo thành công với {$imageCount} ảnh!";
+        if ($variantCount > 0) {
+            $successMessage .= " Đã tạo {$variantCount} biến thể.";
+        }
+
+        return redirect()->route('admin.products.index')->with('success', $successMessage);
     }
 
     /**
@@ -161,6 +245,18 @@ class ProductController extends Controller
             'additional_images' => 'nullable|array|max:5',
             'additional_images.*' => 'image|mimes:jpeg,png,jpg,webp|max:2048',
             'keep_images' => 'nullable|string', // Indices of images to keep
+            // Variant support
+            'has_variants' => 'boolean',
+            'variants' => 'nullable|array',
+            'variants.*.id' => 'nullable|integer|exists:product_variants,id',
+            'variants.*.size' => 'required_if:has_variants,true|string|max:50',
+            'variants.*.color' => 'required_if:has_variants,true|string|max:50',
+            'variants.*.color_code' => 'nullable|string|max:7',
+            'variants.*.price' => 'required_if:has_variants,true|numeric|min:0',
+            'variants.*.sale_price' => 'nullable|numeric|min:0',
+            'variants.*.stock_quantity' => 'required_if:has_variants,true|integer|min:0',
+            'variants.*.sku' => 'nullable|string|max:100',
+            'variants.*.is_active' => 'boolean',
         ]);
 
         // Update slug if name changed
@@ -221,6 +317,44 @@ class ProductController extends Controller
         }
         
         $product->update($validated);
+
+        // Xử lý variants
+        if ($request->has_variants && $request->filled('variants')) {
+            // Lấy danh sách variant IDs hiện tại
+            $existingVariantIds = $product->variants->pluck('id')->toArray();
+            $submittedVariantIds = array_filter(array_column($request->variants, 'id'));
+            
+            // Xóa các variants không còn trong danh sách submit
+            $variantsToDelete = array_diff($existingVariantIds, $submittedVariantIds);
+            if (!empty($variantsToDelete)) {
+                \App\Models\ProductVariant::whereIn('id', $variantsToDelete)->delete();
+            }
+            
+            // Cập nhật hoặc tạo mới variants
+            foreach ($request->variants as $variantData) {
+                $variantData['product_id'] = $product->id;
+                $variantData['is_active'] = $variantData['is_active'] ?? true;
+                
+                // Tạo SKU cho variant nếu không có
+                if (empty($variantData['sku'])) {
+                    $variantData['sku'] = $product->sku . '-' . strtoupper($variantData['size']) . '-' . strtoupper(str_replace(' ', '', $variantData['color']));
+                }
+                
+                if (!empty($variantData['id'])) {
+                    // Cập nhật variant hiện có
+                    $variant = \App\Models\ProductVariant::find($variantData['id']);
+                    if ($variant) {
+                        $variant->update($variantData);
+                    }
+                } else {
+                    // Tạo variant mới
+                    \App\Models\ProductVariant::create($variantData);
+                }
+            }
+        } else {
+            // Nếu không có variants, xóa tất cả variants hiện có
+            $product->variants()->delete();
+        }
 
         $imageCount = !empty($newImages) ? count($newImages) : count($product->images ?? []);
         return redirect()->route('admin.products.index')

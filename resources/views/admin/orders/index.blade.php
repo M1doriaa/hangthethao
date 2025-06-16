@@ -113,48 +113,50 @@
             <i class="fas fa-list me-2"></i>Danh sách đơn hàng
             <span class="badge bg-secondary ms-2">{{ $orders->total() }}</span>
         </h5>
-    </div>
-    <div class="card-body p-0">
+    </div>    <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover mb-0">
-                <thead>
+                <thead class="table-light">
                     <tr>
-                        <th>Mã đơn hàng</th>
-                        <th>Khách hàng</th>
-                        <th>Ngày đặt</th>
-                        <th>Sản phẩm</th>
-                        <th>Tổng tiền</th>
-                        <th>Thanh toán</th>
-                        <th>Trạng thái</th>
-                        <th>Thao tác</th>
+                        <th class="border-0">Mã đơn hàng</th>
+                        <th class="border-0 d-none d-md-table-cell">Khách hàng</th>
+                        <th class="border-0 d-none d-lg-table-cell">Ngày đặt</th>
+                        <th class="border-0 d-none d-lg-table-cell">Sản phẩm</th>
+                        <th class="border-0">Tổng tiền</th>
+                        <th class="border-0 d-none d-md-table-cell">Thanh toán</th>
+                        <th class="border-0">Trạng thái</th>
+                        <th class="border-0">Thao tác</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($orders as $order)
-                    <tr>
+                    @forelse($orders as $order)                    <tr>
                         <td>
                             <strong class="text-primary">{{ $order->order_number }}</strong>
+                            <div class="d-md-none">
+                                <small class="text-muted d-block">{{ $order->customer_name }}</small>
+                                <small class="text-muted d-block">{{ $order->created_at->format('d/m/Y H:i') }}</small>
+                            </div>
                         </td>
-                        <td>
+                        <td class="d-none d-md-table-cell">
                             <div>
                                 <strong>{{ $order->customer_name }}</strong><br>
                                 <small class="text-muted">{{ $order->customer_phone }}</small><br>
                                 <small class="text-muted">{{ $order->customer_email }}</small>
                             </div>
                         </td>
-                        <td>
+                        <td class="d-none d-lg-table-cell">
                             <div>
                                 {{ $order->created_at->format('d/m/Y') }}<br>
                                 <small class="text-muted">{{ $order->created_at->format('H:i') }}</small>
                             </div>
                         </td>
-                        <td>
+                        <td class="d-none d-lg-table-cell">
                             <span class="badge bg-info">{{ $order->total_items }} sản phẩm</span>
                         </td>
                         <td>
                             <strong class="text-danger">{{ $order->formatted_total }}</strong>
                         </td>
-                        <td>
+                        <td class="d-none d-md-table-cell">
                             <span class="badge bg-secondary">{{ $order->payment_method_label }}</span>
                         </td>
                         <td>
@@ -213,10 +215,9 @@
             </table>
         </div>
     </div>
-    
-    @if($orders->hasPages())
-    <div class="card-footer">
-        {{ $orders->withQueryString()->links() }}
+      @if($orders->hasPages())
+    <div class="card-footer bg-light">
+        {{ $orders->withQueryString()->links('custom.pagination') }}
     </div>
     @endif
 </div>
@@ -228,6 +229,12 @@ function updateOrderStatus(orderId, status) {
     if (!confirm('Bạn có chắc chắn muốn thay đổi trạng thái đơn hàng này?')) {
         return;
     }
+    
+    // Show loading state
+    const button = event.target.closest('.btn-group');
+    const originalContent = button.innerHTML;
+    button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Đang xử lý...';
+    button.disabled = true;
     
     fetch(`/admin/api/orders/${orderId}/update-status`, {
         method: 'POST',
@@ -242,16 +249,61 @@ function updateOrderStatus(orderId, status) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
+            // Show success message
+            showAlert('success', 'Cập nhật trạng thái đơn hàng thành công!');
             // Reload trang để cập nhật giao diện
-            location.reload();
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
         } else {
-            alert('Lỗi: ' + data.message);
+            // Restore button state
+            button.innerHTML = originalContent;
+            button.disabled = false;
+            showAlert('danger', 'Lỗi: ' + data.message);
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Có lỗi xảy ra khi cập nhật trạng thái đơn hàng');
+        // Restore button state
+        button.innerHTML = originalContent;
+        button.disabled = false;
+        showAlert('danger', 'Có lỗi xảy ra khi cập nhật trạng thái đơn hàng');
     });
 }
+
+function showAlert(type, message) {
+    const alertHtml = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    // Insert alert at the top of content
+    const contentWrapper = document.querySelector('.content-wrapper');
+    contentWrapper.insertAdjacentHTML('afterbegin', alertHtml);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        const alert = contentWrapper.querySelector('.alert');
+        if (alert) {
+            alert.remove();
+        }
+    }, 5000);
+}
+
+// Add smooth scrolling to pagination
+document.addEventListener('DOMContentLoaded', function() {
+    const paginationLinks = document.querySelectorAll('.pagination .page-link');
+    paginationLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            if (this.href) {
+                // Add loading state to clicked link
+                this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
+            }
+        });
+    });
+});
 </script>
 @endpush

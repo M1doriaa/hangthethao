@@ -133,9 +133,7 @@
 
         .content-wrapper {
             padding: 20px;
-        }
-
-        @media (max-width: 768px) {
+        }        @media (max-width: 768px) {
             .sidebar {
                 min-height: auto;
             }
@@ -143,6 +141,103 @@
             .main-content {
                 min-height: auto;
             }
+        }
+
+        /* Custom Pagination Styles */
+        .pagination {
+            margin: 0;
+        }
+
+        .page-link {
+            color: var(--primary-red);
+            border: 1px solid #dee2e6;
+            padding: 0.5rem 0.75rem;
+            transition: all 0.2s ease;
+        }
+
+        .page-link:hover {
+            color: white;
+            background-color: var(--primary-red);
+            border-color: var(--primary-red);
+        }
+
+        .page-item.active .page-link {
+            background-color: var(--primary-red);
+            border-color: var(--primary-red);
+            color: white;
+        }
+
+        .page-item.disabled .page-link {
+            color: #6c757d;
+            background-color: #fff;
+            border-color: #dee2e6;
+        }
+
+        .card-footer {
+            background-color: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+            padding: 1rem 1.25rem;
+        }        /* Mobile responsive pagination */
+        @media (max-width: 576px) {
+            .pagination {
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            
+            .page-item {
+                margin: 2px;
+            }
+            
+            .pagination .page-link {
+                padding: 0.4rem 0.6rem;
+                font-size: 0.875rem;
+            }
+            
+            /* Mobile table improvements */
+            .table td {
+                padding: 0.75rem 0.5rem;
+            }
+            
+            .badge {
+                font-size: 0.75rem;
+                padding: 0.25em 0.5em;
+            }
+            
+            .btn-sm {
+                padding: 0.25rem 0.5rem;
+                font-size: 0.75rem;
+            }
+            
+            .dropdown-menu {
+                font-size: 0.875rem;
+            }
+        }
+
+        /* Loading states and animations */
+        .table-hover tbody tr:hover {
+            background-color: rgba(196, 30, 58, 0.05);
+        }
+
+        .badge {
+            font-weight: 500;
+            letter-spacing: 0.025em;
+        }
+
+        .btn-group .dropdown-toggle::after {
+            margin-left: 0.5em;
+        }
+
+        /* Enhanced card styling */
+        .card {
+            transition: box-shadow 0.2s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .card-footer {
+            border-top: 1px solid rgba(0,0,0,0.125);
         }
     </style>
     
@@ -169,10 +264,14 @@
                        href="{{ route('admin.products.index') }}">
                         <i class="fas fa-box"></i>Sản phẩm
                     </a>
-                    
-                    <a class="nav-link {{ request()->routeIs('admin.orders.*') ? 'active' : '' }}" 
+                      <a class="nav-link {{ request()->routeIs('admin.orders.*') ? 'active' : '' }}" 
                        href="{{ route('admin.orders.index') }}">
                         <i class="fas fa-shopping-cart"></i>Đơn hàng
+                    </a>
+                    
+                    <a class="nav-link {{ request()->routeIs('admin.reviews.*') ? 'active' : '' }}" 
+                       href="{{ route('admin.reviews.index') }}">
+                        <i class="fas fa-star"></i>Đánh giá
                     </a>
                     
                     <hr class="my-3" style="border-color: rgba(255,255,255,0.2);">

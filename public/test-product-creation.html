@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Product Creation</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background: #d4edda; border-color: #c3e6cb; color: #155724; }
+        .error { background: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        #results { margin-top: 20px; }
+        .loading { opacity: 0.6; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Test Product Creation System</h1>
+    
+    <div class="test-section">
+        <h3>Quick Tests</h3>
+        <button onclick="testSimpleProduct()">Test Simple Product Creation</button>
+        <button onclick="testVariantProduct()">Test Variant Product Creation</button>
+        <button onclick="clearResults()">Clear Results</button>
+    </div>
+    
+    <div id="results"></div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        
+        function addResult(title, content, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `test-section ${type}`;
+            div.innerHTML = `<h4>${title}</h4><pre>${content}</pre>`;
+            results.appendChild(div);
+        }
+        
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+        
+        async function testSimpleProduct() {
+            try {
+                addResult('Testing Simple Product Creation', 'Starting test...', 'info');
+                
+                const formData = new FormData();
+                formData.append('_token', await getCSRFToken());
+                formData.append('name', 'Test Simple Product ' + Date.now());
+                formData.append('sku', 'TEST-SIMPLE-' + Date.now());
+                formData.append('description', 'This is a test product description');
+                formData.append('price', '500000');
+                formData.append('category', 'soccer');
+                formData.append('stock_quantity', '100');
+                formData.append('status', 'active');
+                formData.append('is_active', '1');
+                
+                // Create a simple test image
+                const canvas = document.createElement('canvas');
+                canvas.width = 100;
+                canvas.height = 100;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#ff0000';
+                ctx.fillRect(0, 0, 100, 100);
+                
+                const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                formData.append('main_image', blob, 'test-image.png');
+                
+                const response = await fetch(`${API_BASE}/admin/products`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    addResult('Simple Product Test', 'SUCCESS: Product created successfully!', 'success');
+                } else {
+                    const errorText = await response.text();
+                    addResult('Simple Product Test', `FAILED: ${response.status} - ${errorText}`, 'error');
+                }
+            } catch (error) {
+                addResult('Simple Product Test', `ERROR: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testVariantProduct() {
+            try {
+                addResult('Testing Variant Product Creation', 'Starting test...', 'info');
+                
+                const formData = new FormData();
+                formData.append('_token', await getCSRFToken());
+                formData.append('name', 'Test Variant Product ' + Date.now());
+                formData.append('sku', 'TEST-VAR-' + Date.now());
+                formData.append('description', 'This is a test variant product description');
+                formData.append('price', '500000');
+                formData.append('category', 'soccer');
+                formData.append('status', 'active');
+                formData.append('is_active', '1');
+                formData.append('has_variants', '1');
+                
+                // Add variants
+                formData.append('variants[0][size]', 'M');
+                formData.append('variants[0][color]', 'Đỏ');
+                formData.append('variants[0][color_code]', '#FF0000');
+                formData.append('variants[0][price]', '500000');
+                formData.append('variants[0][stock_quantity]', '50');
+                formData.append('variants[0][is_active]', '1');
+                
+                formData.append('variants[1][size]', 'L');
+                formData.append('variants[1][color]', 'Xanh');
+                formData.append('variants[1][color_code]', '#0000FF');
+                formData.append('variants[1][price]', '550000');
+                formData.append('variants[1][stock_quantity]', '30');
+                formData.append('variants[1][is_active]', '1');
+                
+                // Create a simple test image
+                const canvas = document.createElement('canvas');
+                canvas.width = 100;
+                canvas.height = 100;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#00ff00';
+                ctx.fillRect(0, 0, 100, 100);
+                
+                const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                formData.append('main_image', blob, 'test-variant-image.png');
+                
+                const response = await fetch(`${API_BASE}/admin/products`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    addResult('Variant Product Test', 'SUCCESS: Variant product created successfully!', 'success');
+                } else {
+                    const errorText = await response.text();
+                    addResult('Variant Product Test', `FAILED: ${response.status} - ${errorText}`, 'error');
+                }
+            } catch (error) {
+                addResult('Variant Product Test', `ERROR: ${error.message}`, 'error');
+            }
+        }
+        
+        async function getCSRFToken() {
+            try {
+                const response = await fetch(`${API_BASE}/admin/products/create`);
+                const text = await response.text();
+                const match = text.match(/name="_token"[^>]*value="([^"]*)"/) || text.match(/content="([^"]*)"[^>]*name="csrf-token"/);
+                return match ? match[1] : null;
+            } catch (error) {
+                console.error('Failed to get CSRF token:', error);
+                return null;
+            }
+        }
+    </script>
+</body>
+</html>

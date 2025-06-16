@@ -22,27 +22,40 @@
     }
     
     .cart-item-image {
-        width: 100px;
-        height: 100px;
+        width: 100%;
+        height: 120px;
         object-fit: cover;
         border-radius: 8px;
+        border: 2px solid #f8f9fa;
+        transition: all 0.3s ease;
+    }
+    
+    .cart-item-image:hover {
+        border-color: var(--primary-red);
+        transform: scale(1.02);
     }
     
     .cart-item-info h6 {
         color: #333;
         font-weight: 600;
-        margin-bottom: 5px;
+        margin-bottom: 8px;
+        line-height: 1.3;
     }
     
-    .cart-item-details {
-        color: #666;
-        font-size: 0.9rem;
+    .cart-item-details .row {
+        margin: 0;
+    }
+    
+    .cart-item-details .col-6 {
+        padding-left: 0;
+        padding-right: 5px;
     }
     
     .cart-item-price {
         color: var(--primary-red);
         font-weight: bold;
         font-size: 1.1rem;
+        margin-bottom: 2px;
     }
     
     .quantity-controls {
@@ -71,11 +84,12 @@
     }
     
     .quantity-input {
-        width: 60px;
+        width: 50px;
         text-align: center;
         border: 1px solid #ddd;
         border-radius: 5px;
-        padding: 8px;
+        padding: 6px;
+        font-size: 0.9rem;
     }
     
     .cart-summary {
@@ -149,19 +163,87 @@
         text-decoration: underline;
     }
     
+    .updating-variant {
+        opacity: 0.6;
+        pointer-events: none;
+        position: relative;
+    }
+    
+    .updating-variant::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 20px;
+        height: 20px;
+        margin: -10px 0 0 -10px;
+        border: 2px solid #f3f3f3;
+        border-top: 2px solid var(--primary-red);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        z-index: 10;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .cart-item-details .form-label {
+        margin-bottom: 3px;
+        font-weight: 600;
+        color: #666;
+        font-size: 0.8rem;
+    }
+    
+    .cart-item-details .badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+    
+    .size-selector,
+    .color-selector {
+        max-width: 100%;
+        font-size: 0.8rem;
+        padding: 0.25rem 0.5rem;
+    }
+    
+    .updating-variant {
+        opacity: 0.6;
+        pointer-events: none;
+    }
+    
     @media (max-width: 768px) {
         .cart-item {
             padding: 15px;
         }
         
         .cart-item-image {
-            width: 80px;
-            height: 80px;
+            height: 100px;
         }
         
         .quantity-controls {
-            flex-direction: column;
-            gap: 5px;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .size-selector,
+        .color-selector {
+            font-size: 0.75rem;
+            padding: 0.2rem 0.4rem;
+        }
+        
+        .cart-item-info h6 {
+            font-size: 0.9rem;
+        }
+        
+        .cart-item-price {
+            font-size: 1rem;
+        }
+        
+        .cart-summary {
+            margin-top: 2rem;
+            position: static;
         }
     }
 </style>
@@ -214,51 +296,118 @@
             <!-- Cart Items -->
             <div class="row">
                 <div class="col-lg-8">
-                    <div id="cart-items-container">
-                        @foreach($cartItems as $key => $item)
-                            <div class="cart-item" data-key="{{ $key }}">
+                    <div id="cart-items-container">                        @foreach($cartItems as $key => $item)
+                            <div class="cart-item" data-cart-id="{{ $item['cart_id'] ?? $key }}" data-key="{{ $item['cart_id'] ?? $key }}">
                                 <div class="row align-items-center">
-                                    <div class="col-md-2 col-3">
-                                        <img src="{{ $item['image'] ?? 'https://via.placeholder.com/100x100/cccccc/ffffff?text=Product' }}" 
-                                             alt="{{ $item['name'] }}" 
-                                             class="cart-item-image">
+                                    <!-- Product Image -->
+                                    <div class="col-md-2 col-4">
+                                        <div class="position-relative">
+                                            <img src="{{ $item['image'] ?? 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2Y4ZjlmYSIgc3Ryb2tlPSIjZGVlMmU2IiBzdHJva2Utd2lkdGg9IjIiLz4KICA8dGV4dCB4PSI1MCIgeT0iNDUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMCIgZmlsbD0iIzZjNzU3ZCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+S2jDtG5nIGPDsyDhqo9uaDwvdGV4dD4KICA8dGV4dCB4PSI1MCIgeT0iNjAiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI4IiBmaWxsPSIjNmM3NTdkIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5TYW4gcGjhuqltPC90ZXh0Pgo8L3N2Zz4=' }}" 
+                                                 alt="{{ $item['name'] }}" 
+                                                 class="cart-item-image w-100"
+                                                 onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1zbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2Y4ZjlmYSIgc3Ryb2tlPSIjZGVlMmU2IiBzdHJva2Utd2lkdGg9IjIiLz4KICA8dGV4dCB4PSI1MCIgeT0iNDUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMCIgZmlsbD0iIzZjNzU3ZCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+S2jDtG5nIGPDsyDhqo9uaDwvdGV4dD4KICA8dGV4dCB4PSI1MCIgeT0iNjAiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI4IiBmaWxsPSIjNmM3NTdkIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5TYW4gcGjhuqltPC90ZXh0Pgo8L3N2Zz4='; this.onerror=null;">
+                                        </div>
                                     </div>
-                                    <div class="col-md-4 col-9">
+                                    
+                                    <!-- Product Info -->
+                                    <div class="col-md-5 col-8">
                                         <div class="cart-item-info">
-                                            <h6>{{ $item['name'] }}</h6>
+                                            <h6 class="mb-2">{{ $item['name'] }}</h6>
                                             <div class="cart-item-details">
-                                                @if($item['size'] ?? false)
-                                                    <span>Kích thước: <strong>{{ $item['size'] }}</strong></span><br>
-                                                @endif
-                                                @if($item['color'] ?? false)
-                                                    <span>Màu sắc: <strong>{{ $item['color'] }}</strong></span>
+                                                @if(isset($item['has_variants']) && $item['has_variants'])
+                                                    <div class="row g-2">
+                                                        @if(isset($item['available_sizes']) && count($item['available_sizes']) > 0)
+                                                            <div class="col-6">
+                                                                <label class="form-label small mb-1">Size:</label>
+                                                                <select class="form-select form-select-sm size-selector" 
+                                                                        data-key="{{ $item['cart_id'] ?? $key }}" 
+                                                                        data-current-color="{{ $item['color'] ?? '' }}">
+                                                                    @foreach($item['available_sizes'] as $size)
+                                                                        <option value="{{ $size }}" 
+                                                                                {{ ($item['size'] ?? '') == $size ? 'selected' : '' }}>
+                                                                            {{ $size }}
+                                                                        </option>
+                                                                    @endforeach
+                                                                </select>
+                                                            </div>
+                                                        @elseif($item['size'] ?? false)
+                                                            <div class="col-6">
+                                                                <small class="text-muted d-block">Size:</small>
+                                                                <span class="badge bg-light text-dark">{{ $item['size'] }}</span>
+                                                            </div>
+                                                        @endif
+                                                        
+                                                        @if(isset($item['available_colors']) && count($item['available_colors']) > 0)
+                                                            <div class="col-6">
+                                                                <label class="form-label small mb-1">Màu:</label>
+                                                                <select class="form-select form-select-sm color-selector" 
+                                                                        data-key="{{ $item['cart_id'] ?? $key }}" 
+                                                                        data-current-size="{{ $item['size'] ?? '' }}">
+                                                                    @foreach($item['available_colors'] as $color)
+                                                                        <option value="{{ $color }}" 
+                                                                                {{ ($item['color'] ?? '') == $color ? 'selected' : '' }}>
+                                                                            {{ $color }}
+                                                                        </option>
+                                                                    @endforeach
+                                                                </select>
+                                                            </div>
+                                                        @elseif($item['color'] ?? false)
+                                                            <div class="col-6">
+                                                                <small class="text-muted d-block">Màu:</small>
+                                                                <span class="badge bg-light text-dark">{{ $item['color'] }}</span>
+                                                            </div>
+                                                        @endif
+                                                    </div>
+                                                @else
+                                                    @if($item['size'] ?? false)
+                                                        <div class="mb-1">
+                                                            <small class="text-muted">Size:</small>
+                                                            <span class="badge bg-light text-dark ms-1">{{ $item['size'] }}</span>
+                                                        </div>
+                                                    @endif
+                                                    @if($item['color'] ?? false)
+                                                        <div class="mb-1">
+                                                            <small class="text-muted">Màu:</small>
+                                                            <span class="badge bg-light text-dark ms-1">{{ $item['color'] }}</span>
+                                                        </div>
+                                                    @endif
                                                 @endif
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-2 col-6 text-center">
+                                    
+                                    <!-- Price -->
+                                    <div class="col-md-2 col-12 text-center mb-2 mb-md-0">
                                         <div class="cart-item-price">
                                             {{ number_format($item['price']) }}₫
                                         </div>
+                                        <small class="text-muted">{{ number_format($item['price']) }}₫/sản phẩm</small>
                                     </div>
-                                    <div class="col-md-3 col-6">
-                                        <div class="quantity-controls">
-                                            <button class="quantity-btn" onclick="decreaseQuantity('{{ $key }}')">
+                                    
+                                    <!-- Quantity Controls -->
+                                    <div class="col-md-2 col-8">
+                                        <div class="quantity-controls justify-content-center">
+                                            <button class="quantity-btn" onclick="decreaseQuantity('{{ $item['cart_id'] ?? $key }}')">
                                                 <i class="fas fa-minus"></i>
                                             </button>
                                             <input type="number" 
                                                    class="quantity-input" 
                                                    value="{{ $item['quantity'] }}" 
                                                    min="1" 
-                                                   id="qty-{{ $key }}"
-                                                   onchange="updateQuantityFromInput('{{ $key }}', this.value)">
-                                            <button class="quantity-btn" onclick="increaseQuantity('{{ $key }}')">
+                                                   id="qty-{{ $item['cart_id'] ?? $key }}"
+                                                   onchange="updateQuantityFromInput('{{ $item['cart_id'] ?? $key }}', this.value)">
+                                            <button class="quantity-btn" onclick="increaseQuantity('{{ $item['cart_id'] ?? $key }}')">
                                                 <i class="fas fa-plus"></i>
                                             </button>
                                         </div>
+                                        <div class="text-center mt-1">
+                                            <small class="text-muted">SL: {{ $item['quantity'] }}</small>
+                                        </div>
                                     </div>
-                                    <div class="col-md-1 col-12 text-end">
-                                        <button class="remove-item-btn" onclick="removeCartItem('{{ $key }}', '{{ $item['name'] }}')" title="Xóa sản phẩm">
+                                    
+                                    <!-- Remove Button -->
+                                    <div class="col-md-1 col-4 text-end">
+                                        <button class="remove-item-btn" onclick="removeCartItem('{{ $item['cart_id'] ?? $key }}', '{{ $item['name'] }}')" title="Xóa sản phẩm">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </div>
@@ -438,6 +587,10 @@ function clearEntireCart() {
 async function updateQuantityAPI(key, quantity) {
     console.log('🔄 API Update quantity:', key, '=', quantity);
     
+    // Get cart_id from the cart item
+    const cartItem = document.querySelector(`[data-key="${key}"]`);
+    const cartId = cartItem ? cartItem.getAttribute('data-cart-id') : key;
+    
     try {
         const response = await fetch('/cart/update', {
             method: 'POST',
@@ -446,7 +599,7 @@ async function updateQuantityAPI(key, quantity) {
                 'X-CSRF-TOKEN': csrfToken,
                 'Accept': 'application/json'
             },
-            body: JSON.stringify({ key: key, quantity: quantity })
+            body: JSON.stringify({ cart_id: cartId, quantity: quantity })
         });
         
         const result = await response.json();
@@ -464,6 +617,10 @@ async function updateQuantityAPI(key, quantity) {
 async function removeItemAPI(key) {
     console.log('🗑️ API Remove item:', key);
     
+    // Get cart_id from the cart item
+    const cartItem = document.querySelector(`[data-key="${key}"]`);
+    const cartId = cartItem ? cartItem.getAttribute('data-cart-id') : key;
+    
     try {
         const response = await fetch('/cart/remove', {
             method: 'POST',
@@ -472,7 +629,7 @@ async function removeItemAPI(key) {
                 'X-CSRF-TOKEN': csrfToken,
                 'Accept': 'application/json'
             },
-            body: JSON.stringify({ key: key })
+            body: JSON.stringify({ cart_id: cartId })
         });
         
         const result = await response.json();
@@ -572,6 +729,130 @@ function proceedToCheckout() {
 function saveForLater() {
     console.log('Chức năng lưu giỏ hàng đang được phát triển!');
 }
+
+// Variant update functions
+async function updateVariant(key, size, color) {
+    console.log('🔄 Updating variant:', key, 'Size:', size, 'Color:', color);
+    
+    // Add loading state
+    const cartItem = document.querySelector(`[data-key="${key}"]`);
+    if (cartItem) {
+        cartItem.classList.add('updating-variant');
+    }
+    
+    try {
+        const response = await fetch('/cart/update-variant', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ 
+                key: key, 
+                size: size, 
+                color: color 
+            })
+        });
+        
+        const result = await response.json();
+        console.log('📡 Variant update response:', result);
+        
+        if (response.ok && result.success) {
+            // Update price in UI
+            const priceEl = cartItem.querySelector('.cart-item-price');
+            if (priceEl && result.updated_item.price) {
+                priceEl.textContent = new Intl.NumberFormat('vi-VN').format(result.updated_item.price) + '₫';
+            }
+            
+            // Update cart summary
+            if (result.cart_summary) {
+                updateCartSummary(result.cart_summary);
+            }
+            
+            // Update data-key if changed
+            if (result.new_key && result.new_key !== result.old_key) {
+                cartItem.setAttribute('data-key', result.new_key);
+                
+                // Update all elements with the old key
+                const quantityInput = cartItem.querySelector('.quantity-input');
+                if (quantityInput) {
+                    quantityInput.id = 'qty-' + result.new_key;
+                }
+                
+                const sizeSelector = cartItem.querySelector('.size-selector');
+                if (sizeSelector) {
+                    sizeSelector.setAttribute('data-key', result.new_key);
+                }
+                
+                const colorSelector = cartItem.querySelector('.color-selector');
+                if (colorSelector) {
+                    colorSelector.setAttribute('data-key', result.new_key);
+                }
+            }
+            
+            // Show success notification
+            showNotification('Đã cập nhật sản phẩm!', 'success');
+        } else {
+            showNotification(result.message || 'Có lỗi xảy ra!', 'error');
+        }
+        
+    } catch (error) {
+        console.error('❌ Variant update error:', error);
+        showNotification('Có lỗi xảy ra khi cập nhật!', 'error');
+    } finally {
+        // Remove loading state
+        if (cartItem) {
+            cartItem.classList.remove('updating-variant');
+        }
+    }
+}
+
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'error' ? 'danger' : 'success'} position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>
+        ${message}
+        <button type="button" class="btn-close ms-auto" onclick="this.parentElement.remove()"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.remove();
+        }
+    }, 3000);
+}
+
+// Event listeners for size and color selectors
+document.addEventListener('DOMContentLoaded', function() {
+    // Size selector change event
+    document.addEventListener('change', function(e) {
+        if (e.target.classList.contains('size-selector')) {
+            const key = e.target.getAttribute('data-key');
+            const newSize = e.target.value;
+            const currentColor = e.target.getAttribute('data-current-color');
+            
+            updateVariant(key, newSize, currentColor);
+        }
+    });
+    
+    // Color selector change event
+    document.addEventListener('change', function(e) {
+        if (e.target.classList.contains('color-selector')) {
+            const key = e.target.getAttribute('data-key');
+            const newColor = e.target.value;
+            const currentSize = e.target.getAttribute('data-current-size');
+            
+            updateVariant(key, currentSize, newColor);
+        }
+    });
+});
 
 console.log('✅ Cart functions loaded with onclick handlers - No duplicate listeners');
 </script>

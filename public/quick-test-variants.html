@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Test Edit Variants</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .console { background: #000; color: #0f0; padding: 10px; font-family: monospace; height: 200px; overflow-y: auto; }
+        button { margin: 5px; padding: 10px 15px; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h2>Quick Test Edit Variants</h2>
+    
+    <div class="section">
+        <h3>1. Kiểm tra console của edit form</h3>
+        <p>Mở edit form thật và kiểm tra console có thông báo gì không:</p>
+        <ul>
+            <li>Mở edit product page</li>
+            <li>Mở F12 Console</li>
+            <li>Có thấy "EDIT FORM DEBUG FUNCTIONS READY" không?</li>
+            <li>Có lỗi JavaScript màu đỏ nào không?</li>
+        </ul>
+    </div>
+    
+    <div class="section">
+        <h3>2. Test debug functions</h3>
+        <p>Trong console của edit form, thử các lệnh sau:</p>
+        <pre>
+typeof debugEditForm
+typeof testEditVariantGeneration
+debugEditForm()
+testEditVariantGeneration()
+        </pre>
+    </div>
+    
+    <div class="section">
+        <h3>3. Test manual variant creation</h3>
+        <p>Thử tạo variant thủ công:</p>
+        <ol>
+            <li>Tick vào checkbox "Sản phẩm có nhiều biến thể"</li>
+            <li>Chọn 1-2 size (S, M)</li>
+            <li>Chọn 1-2 màu (Đỏ, Xanh)</li>
+            <li>Click "Tạo biến thể"</li>
+            <li>Kiểm tra xem có bảng nào xuất hiện không</li>
+        </ol>
+    </div>
+    
+    <div class="section">
+        <h3>4. Kiểm tra trong console</h3>
+        <div class="console" id="console">
+            <div>Paste kết quả console từ edit form vào đây...</div>
+        </div>
+        <button onclick="clearConsole()">Clear</button>
+        <button onclick="showInstructions()">Show Instructions</button>
+    </div>
+    
+    <div class="section">
+        <h3>5. Nếu vẫn lỗi - Inject trực tiếp</h3>
+        <p>Copy đoạn code này vào console của edit form:</p>
+        <textarea rows="20" cols="80" readonly>
+window.debugEditForm = function() {
+    console.log('=== DEBUGGING EDIT FORM ===');
+    
+    const elements = {
+        hasVariantsCheckbox: document.getElementById('has_variants'),
+        generateVariantsBtn: document.getElementById('generate-variants'),
+        variantsTableContainer: document.getElementById('variants-table-container'),
+        variantsSection: document.getElementById('variants-section'),
+        simpleProductSection: document.getElementById('simple-product-section')
+    };
+    
+    console.log('Elements found:');
+    Object.entries(elements).forEach(([key, element]) => {
+        console.log('  ' + key + ':', !!element, element ? element.tagName : 'NOT FOUND');
+    });
+    
+    const sizeCheckboxes = document.querySelectorAll('.variant-size');
+    const colorCheckboxes = document.querySelectorAll('.variant-color');
+    console.log('Variant options:');
+    console.log('  Sizes: ' + sizeCheckboxes.length);
+    console.log('  Colors: ' + colorCheckboxes.length);
+    
+    const existingVariants = document.querySelectorAll('#variants-table tbody tr');
+    console.log('Existing variants: ' + existingVariants.length);
+    
+    return elements;
+};
+
+window.testEditVariantGeneration = function() {
+    console.log('=== TESTING VARIANT GENERATION IN EDIT ===');
+    
+    const hasVariants = document.getElementById('has_variants');
+    if (hasVariants && !hasVariants.checked) {
+        console.log('Enabling has_variants...');
+        hasVariants.checked = true;
+        hasVariants.dispatchEvent(new Event('change'));
+    }
+    
+    const firstSize = document.querySelector('.variant-size');
+    const secondSize = document.querySelectorAll('.variant-size')[1];
+    const firstColor = document.querySelector('.variant-color');
+    const secondColor = document.querySelectorAll('.variant-color')[1];
+    
+    if (firstSize) {
+        firstSize.checked = true;
+        console.log('Selected size:', firstSize.value);
+    }
+    if (secondSize) {
+        secondSize.checked = true;
+        console.log('Selected size:', secondSize.value);
+    }
+    if (firstColor) {
+        firstColor.checked = true;
+        console.log('Selected color:', firstColor.value);
+    }
+    if (secondColor) {
+        secondColor.checked = true;
+        console.log('Selected color:', secondColor.value);
+    }
+    
+    setTimeout(() => {
+        const generateBtn = document.getElementById('generate-variants');
+        if (generateBtn) {
+            console.log('Clicking generate variants button...');
+            generateBtn.click();
+        } else {
+            console.error('Generate variants button not found!');
+        }
+    }, 1000);
+};
+
+console.log('=== DEBUG FUNCTIONS INJECTED ===');
+console.log('Now you can run: debugEditForm() and testEditVariantGeneration()');
+        </textarea>
+    </div>
+    
+    <script>
+        function clearConsole() {
+            document.getElementById('console').innerHTML = '<div>Console cleared...</div>';
+        }
+        
+        function showInstructions() {
+            document.getElementById('console').innerHTML = `
+                <div class="success">HƯỚNG DẪN KIỂM TRA:</div>
+                <div>1. Mở edit product page</div>
+                <div>2. Mở F12 Console</div>
+                <div>3. Kiểm tra có lỗi màu đỏ không</div>
+                <div>4. Gõ: typeof debugEditForm</div>
+                <div>5. Gõ: typeof testEditVariantGeneration</div>
+                <div>6. Nếu undefined, copy code ở mục 5 vào console</div>
+                <div>7. Chạy: debugEditForm()</div>
+                <div>8. Chạy: testEditVariantGeneration()</div>
+                <div class="success">Báo cáo kết quả cho tôi!</div>
+            `;
+        }
+    </script>
+</body>
+</html>

@@ -402,28 +402,45 @@ function getProductData() {
     const price = parseFloat(document.querySelector('.current-price')?.textContent.replace(/[^\d]/g, '')) || 0;
     const image = document.getElementById('mainImage')?.src;
     
+    // Check if product has variants
+    const hasVariants = document.querySelector('.size-options') || document.querySelector('.color-options');
+    let variantId = null;
+    
+    if (hasVariants && selectedSize && selectedColor) {
+        // Try to find variant_id from hidden input or data attribute
+        const variantElement = document.querySelector(`[data-size="${selectedSize}"][data-color="${selectedColor}"]`);
+        variantId = variantElement?.dataset.variantId || null;
+    }
+    
     return {
         name: productTitle,
-        size: selectedSize,
-        color: selectedColor,
+        size: selectedSize || null,
+        color: selectedColor || null,
         quantity: quantity,
         price: price,
         image: image,
-        id: window.location.pathname.split('/').pop()
+        id: window.location.pathname.split('/').pop(),
+        variant_id: variantId
     };
 }
 
 function validateProductSelection(productData) {
-    if (!productData.size) {
-        showNotification('Vui lòng chọn kích thước!', 'error');
-        document.querySelector('.size-options')?.scrollIntoView({ behavior: 'smooth' });
-        return false;
-    }
+    // Check if product has variants by looking for size/color options
+    const hasVariants = document.querySelector('.size-options') || document.querySelector('.color-options');
     
-    if (!productData.color) {
-        showNotification('Vui lòng chọn màu sắc!', 'error');
-        document.querySelector('.color-options')?.scrollIntoView({ behavior: 'smooth' });
-        return false;
+    if (hasVariants) {
+        // Only validate size/color for variant products
+        if (document.querySelector('.size-options') && !productData.size) {
+            showNotification('Vui lòng chọn kích thước!', 'error');
+            document.querySelector('.size-options')?.scrollIntoView({ behavior: 'smooth' });
+            return false;
+        }
+        
+        if (document.querySelector('.color-options') && !productData.color) {
+            showNotification('Vui lòng chọn màu sắc!', 'error');
+            document.querySelector('.color-options')?.scrollIntoView({ behavior: 'smooth' });
+            return false;
+        }
     }
     
     if (productData.quantity < 1) {

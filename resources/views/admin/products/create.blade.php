@@ -149,31 +149,32 @@
                         @enderror
                     </div>
 
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
+                    <div class="row">                        <div class="col-md-6 mb-3">
                             <label for="price" class="form-label">Giá bán <span class="text-danger">*</span></label>
                             <div class="input-group">
-                                <input type="number" class="form-control @error('price') is-invalid @enderror" 
+                                <input type="text" class="form-control price-input @error('price') is-invalid @enderror" 
                                        id="price" name="price" value="{{ old('price') }}" 
-                                       min="0" step="1000" required>
+                                       placeholder="0" required data-original-value="">
                                 <span class="input-group-text">₫</span>
                             </div>
                             @error('price')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
+                            <div class="form-text">Nhập giá không có dấu phẩy, hệ thống sẽ tự động format</div>
                         </div>
                         
                         <div class="col-md-6 mb-3">
                             <label for="original_price" class="form-label">Giá gốc (để tính giảm giá)</label>
                             <div class="input-group">
-                                <input type="number" class="form-control @error('original_price') is-invalid @enderror" 
+                                <input type="text" class="form-control price-input @error('original_price') is-invalid @enderror" 
                                        id="original_price" name="original_price" value="{{ old('original_price') }}" 
-                                       min="0" step="1000">
+                                       placeholder="0" data-original-value="">
                                 <span class="input-group-text">₫</span>
                             </div>
                             @error('original_price')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
+                            <div class="form-text">Để trống nếu không có giảm giá</div>
                         </div>
                     </div>                    <div class="row">                        <div class="col-md-6 mb-3">
                             <label for="category" class="form-label">Danh mục <span class="text-danger">*</span></label>
@@ -199,12 +200,140 @@
                             @error('brand')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
+                        </div>                    </div>
+
+                    <!-- Product Type Section -->
+                    <div class="mb-4">
+                        <h6 class="mb-3">
+                            <i class="fas fa-cogs me-2"></i>Loại sản phẩm
+                        </h6>
+                        
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="has_variants" name="has_variants" value="1" {{ old('has_variants') ? 'checked' : '' }}>
+                                <label class="form-check-label" for="has_variants">
+                                    <strong>Sản phẩm có nhiều biến thể (size, màu sắc, giá khác nhau)</strong>
+                                </label>
+                            </div>
+                            <div class="form-text">Bật tùy chọn này nếu sản phẩm có nhiều size/màu với giá khác nhau</div>
                         </div>
-                    </div>                    <div class="mb-3">
+
+                        <!-- Simple Product Section -->
+                        <div id="simple-product-section" style="display: {{ old('has_variants') ? 'none' : 'block' }};">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Sản phẩm đơn giản:</strong> Sử dụng giá cố định ở trên và có thể thêm size/màu sắc tùy chọn.
+                            </div>
+                        </div>
+
+                        <!-- Variants Section -->
+                        <div id="variants-section" style="display: {{ old('has_variants') ? 'block' : 'none' }};">
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <strong>Lưu ý:</strong> Khi bật chế độ variants, giá sản phẩm sẽ được quản lý theo từng biến thể bên dưới.
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Các size có sẵn</label>
+                                    <div class="size-options">
+                                        <div class="row">
+                                            @foreach(['S', 'M', 'L', 'XL', 'XXL', 'XXXL'] as $size)
+                                            <div class="col-md-4 col-6 mb-2">
+                                                <div class="form-check">
+                                                    <input class="form-check-input variant-size" type="checkbox" 
+                                                           id="size_{{ $size }}" value="{{ $size }}">
+                                                    <label class="form-check-label" for="size_{{ $size }}">{{ $size }}</label>
+                                                </div>
+                                            </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Các màu có sẵn</label>
+                                    <div class="color-options">
+                                        <div class="row">
+                                            @php
+                                            $colors = [
+                                                'Đỏ' => '#FF0000',
+                                                'Xanh dương' => '#0000FF', 
+                                                'Xanh lá' => '#00FF00',
+                                                'Vàng' => '#FFFF00',
+                                                'Đen' => '#000000',
+                                                'Trắng' => '#FFFFFF',
+                                                'Xám' => '#808080',
+                                                'Cam' => '#FFA500'
+                                            ];
+                                            @endphp
+                                            @foreach($colors as $colorName => $colorCode)
+                                            <div class="col-md-6 col-12 mb-2">
+                                                <div class="form-check">
+                                                    <input class="form-check-input variant-color" type="checkbox" 
+                                                           id="color_{{ $loop->index }}" value="{{ $colorName }}" 
+                                                           data-color-code="{{ $colorCode }}">
+                                                    <label class="form-check-label d-flex align-items-center" for="color_{{ $loop->index }}">
+                                                        <span class="color-preview me-2" 
+                                                              style="width: 20px; height: 20px; border-radius: 50%; background-color: {{ $colorCode }}; border: 1px solid #ddd;"></span>
+                                                        {{ $colorName }}
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>                            <div class="mb-3">
+                                <button type="button" class="btn btn-primary" id="generate-variants-btn">
+                                    <i class="fas fa-magic me-2"></i>Tạo biến thể
+                                </button>
+                            </div>
+
+                            <!-- Variants Table -->
+                            <div id="variants-table-container" style="display: none;">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6 class="mb-0">Biến thể sản phẩm</h6>
+                                    <div class="bulk-actions" style="display: none;">
+                                        <button type="button" class="btn btn-outline-danger btn-sm" id="delete-selected-variants">
+                                            <i class="fas fa-trash me-2"></i>Xóa đã chọn (<span id="selected-count">0</span>)
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th width="40">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="select-all-variants">
+                                                        <label class="form-check-label" for="select-all-variants">
+                                                            <span class="visually-hidden">Chọn tất cả</span>
+                                                        </label>
+                                                    </div>
+                                                </th>
+                                                <th>Size</th>
+                                                <th>Màu sắc</th>
+                                                <th>Giá bán</th>
+                                                <th>Giá sale</th>
+                                                <th>Số lượng</th>
+                                                <th>SKU</th>
+                                                <th>Hoạt động</th>
+                                                <th>Thao tác</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="variants-table-body">
+                                            <!-- Variants will be generated here -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>                    <div class="mb-3" id="stock-quantity-section" style="display: {{ old('has_variants') ? 'none' : 'block' }};">
                         <label for="stock_quantity" class="form-label">Số lượng tồn kho <span class="text-danger">*</span></label>
                         <input type="number" class="form-control @error('stock_quantity') is-invalid @enderror" 
-                               id="stock_quantity" name="stock_quantity" value="{{ old('stock_quantity', 0) }}" 
-                               min="0" required>
+                               id="stock_quantity" name="stock_quantity" value="{{ old('stock_quantity') }}" 
+                               min="0" step="1" placeholder="Nhập số lượng tồn kho" required>
                         @error('stock_quantity')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
@@ -281,42 +410,7 @@
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <!-- Product Variants -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-palette me-2"></i>Biến thể sản phẩm
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="sizes" class="form-label">Kích thước</label>
-                            <div class="form-text mb-2">Nhập các size cách nhau bởi dấu phẩy (VD: S, M, L, XL)</div>
-                            <input type="text" class="form-control @error('sizes') is-invalid @enderror" 
-                                   id="sizes" name="sizes_input" value="{{ old('sizes_input') }}" 
-                                   placeholder="S, M, L, XL">
-                            @error('sizes')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        
-                        <div class="col-md-6 mb-3">
-                            <label for="colors" class="form-label">Màu sắc</label>
-                            <div class="form-text mb-2">Nhập các màu cách nhau bởi dấu phẩy (VD: Đỏ, Xanh, Trắng)</div>
-                            <input type="text" class="form-control @error('colors') is-invalid @enderror" 
-                                   id="colors" name="colors_input" value="{{ old('colors_input') }}" 
-                                   placeholder="Đỏ, Xanh, Trắng">
-                            @error('colors')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                    </div>
-                </div>
-            </div>
+                </div>            </div>
 
             <!-- SEO Information -->
             <div class="card mb-4">
@@ -438,12 +532,25 @@
 
 @push('scripts')
 <script>
+// Price formatting functions (define globally)
+function formatPrice(price) {
+    if (!price || price === 0) return '';
+    return parseInt(price).toLocaleString('vi-VN');
+}
+
+function unformatPrice(priceString) {
+    if (!priceString) return '';
+    return priceString.replace(/[^\d]/g, '');
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('=== ADMIN PRODUCT CREATE PAGE LOADED ===');
+    console.log('Location:', window.location.href);
+    
     // Auto generate SKU from product name
     const nameInput = document.getElementById('name');
     const skuInput = document.getElementById('sku');
-    
-    nameInput.addEventListener('input', function() {
+      nameInput.addEventListener('input', function() {
         if (!skuInput.value) {
             const sku = this.value
                 .toLowerCase()
@@ -453,6 +560,65 @@ document.addEventListener('DOMContentLoaded', function() {
             skuInput.value = sku.toUpperCase();
         }
     });
+
+    // Initialize price formatting for main price inputs
+    function addPriceFormattingToInput(input) {
+        if (!input) return;
+        
+        // Format on input
+        input.addEventListener('input', function() {
+            const cursorPosition = this.selectionStart;
+            const oldLength = this.value.length;
+            const unformatted = unformatPrice(this.value);
+            const formatted = formatPrice(unformatted);
+            
+            this.value = formatted;
+            
+            // Restore cursor position
+            const newLength = formatted.length;
+            const newPosition = cursorPosition + (newLength - oldLength);
+            this.setSelectionRange(newPosition, newPosition);
+        });
+
+        // Format on blur
+        input.addEventListener('blur', function() {
+            const unformatted = unformatPrice(this.value);
+            this.value = formatPrice(unformatted);
+        });
+    }    // Apply price formatting to main price inputs
+    addPriceFormattingToInput(document.getElementById('price'));
+    addPriceFormattingToInput(document.getElementById('original_price'));
+
+    // Handle stock quantity input to prevent leading zeros
+    const stockInput = document.getElementById('stock_quantity');
+    if (stockInput) {
+        stockInput.addEventListener('input', function() {
+            // Remove leading zeros
+            let value = this.value;
+            if (value.length > 1 && value.startsWith('0') && !value.startsWith('0.')) {
+                this.value = value.replace(/^0+/, '') || '0';
+            }
+        });
+        
+        stockInput.addEventListener('blur', function() {
+            // Clean up the value on blur
+            let value = parseInt(this.value);
+            if (isNaN(value) || value < 0) {
+                this.value = '';
+            } else {
+                this.value = value;
+            }
+        });
+        
+        // Clear default value on first focus
+        let firstFocus = true;
+        stockInput.addEventListener('focus', function() {
+            if (firstFocus && this.value === '0') {
+                this.value = '';
+                firstFocus = false;
+            }
+        });
+    }
 
     // Auto generate meta title from product name
     const metaTitleInput = document.getElementById('meta_title');
@@ -725,9 +891,507 @@ document.addEventListener('DOMContentLoaded', function() {
                 additionalImagesInput.value = '';
                 additionalDropArea.querySelector('.upload-content').style.display = 'block';
                 updateUploadSummary(0, 0);
+            }        }
+    });    // Variants handling
+    console.log('=== INITIALIZING VARIANTS HANDLING ===');
+    const hasVariantsCheckbox = document.getElementById('has_variants');
+    const simpleProductSection = document.getElementById('simple-product-section');
+    const variantsSection = document.getElementById('variants-section');
+    const stockQuantitySection = document.getElementById('stock-quantity-section');
+    const generateVariantsBtn = document.getElementById('generate-variants-btn');
+    const variantsTableContainer = document.getElementById('variants-table-container');
+    const variantsTableBody = document.getElementById('variants-table-body');
+
+    console.log('Variants elements found:', {
+        hasVariantsCheckbox: !!hasVariantsCheckbox,
+        generateVariantsBtn: !!generateVariantsBtn,
+        variantsTableBody: !!variantsTableBody,
+        variantsTableContainer: !!variantsTableContainer
+    });
+
+    if (!generateVariantsBtn) {
+        console.error('CRITICAL: generate-variants-btn element not found!');
+        console.log('Available buttons:', Array.from(document.querySelectorAll('button')).map(b => ({ id: b.id, text: b.textContent.trim() })));
+    }    // Toggle product type
+    if (hasVariantsCheckbox) {
+        console.log('Adding change event to hasVariantsCheckbox');
+        hasVariantsCheckbox.addEventListener('change', function() {
+            console.log('hasVariantsCheckbox changed to:', this.checked);
+            if (this.checked) {
+                simpleProductSection.style.display = 'none';
+                variantsSection.style.display = 'block';
+                stockQuantitySection.style.display = 'none';
+                
+                // Make stock_quantity not required for variants
+                document.getElementById('stock_quantity').removeAttribute('required');
+            } else {
+                simpleProductSection.style.display = 'block';
+                variantsSection.style.display = 'none';
+                stockQuantitySection.style.display = 'block';
+                variantsTableContainer.style.display = 'none';
+                
+                // Make stock_quantity required for simple products
+                document.getElementById('stock_quantity').setAttribute('required', 'required');
+                
+                // Clear variants table
+                variantsTableBody.innerHTML = '';
             }
+        });
+    } else {
+        console.error('hasVariantsCheckbox not found!');
+    }// Generate variants
+    if (generateVariantsBtn) {
+        generateVariantsBtn.addEventListener('click', function() {
+            console.log('Generate variants clicked');
+            
+            const selectedSizes = Array.from(document.querySelectorAll('.variant-size:checked')).map(cb => cb.value);
+            const selectedColors = Array.from(document.querySelectorAll('.variant-color:checked')).map(cb => ({
+                name: cb.value,
+                code: cb.dataset.colorCode
+            }));
+
+            console.log('Selected sizes:', selectedSizes);
+            console.log('Selected colors:', selectedColors);
+
+            if (selectedSizes.length === 0 && selectedColors.length === 0) {
+                alert('Vui lòng chọn ít nhất một size hoặc màu sắc!');
+                return;
+            }
+
+        // Generate combinations
+        const variants = [];
+        
+        if (selectedSizes.length > 0 && selectedColors.length > 0) {
+            // Both size and color
+            selectedSizes.forEach(size => {
+                selectedColors.forEach(color => {
+                    variants.push({
+                        size: size,
+                        color: color.name,
+                        colorCode: color.code
+                    });
+                });
+            });
+        } else if (selectedSizes.length > 0) {
+            // Only sizes
+            selectedSizes.forEach(size => {
+                variants.push({
+                    size: size,
+                    color: '',
+                    colorCode: ''
+                });
+            });
+        } else {
+            // Only colors
+            selectedColors.forEach(color => {
+                variants.push({
+                    size: '',
+                    color: color.name,
+                    colorCode: color.code
+                });
+            });
+        }        // Generate table rows
+        generateVariantsTable(variants);
+        variantsTableContainer.style.display = 'block';
+    });
+    } else {
+        console.error('generateVariantsBtn not found!');
+    }    function generateVariantsTable(variants) {
+        console.log('generateVariantsTable called with:', variants);
+        
+        if (!variants || variants.length === 0) {
+            console.error('No variants provided');
+            return;
+        }
+        
+        if (!variantsTableBody) {
+            console.error('variantsTableBody not found');
+            return;
+        }
+        
+        const priceInput = document.getElementById('price');
+        const skuInput = document.getElementById('sku');
+        const basePrice = priceInput ? unformatPrice(priceInput.value) || 0 : 0;
+        const baseSku = skuInput ? skuInput.value || '' : '';
+        
+        console.log('Base price (unformatted):', basePrice);
+        console.log('Base SKU:', baseSku);
+        
+        variantsTableBody.innerHTML = '';
+        
+        variants.forEach((variant, index) => {
+            try {
+                const row = document.createElement('tr');
+                const variantSku = baseSku + (variant.size ? `-${variant.size}` : '') + (variant.color ? `-${variant.color.replace(/\s+/g, '')}` : '');
+                
+                console.log(`Creating row ${index}:`, variant, 'SKU:', variantSku);
+                
+                row.innerHTML = `
+                    <td>
+                        <div class="form-check">
+                            <input class="form-check-input variant-checkbox" type="checkbox">
+                        </div>
+                    </td>
+                    <td>
+                        <input type="hidden" name="variants[${index}][size]" value="${variant.size || ''}">
+                        ${variant.size || '-'}
+                    </td>
+                    <td>
+                        <input type="hidden" name="variants[${index}][color]" value="${variant.color || ''}">
+                        <input type="hidden" name="variants[${index}][color_code]" value="${variant.colorCode || ''}">
+                        <div class="d-flex align-items-center">
+                            ${variant.colorCode ? `<span class="color-preview me-2" style="width: 20px; height: 20px; border-radius: 50%; background-color: ${variant.colorCode}; border: 1px solid #ddd;"></span>` : ''}
+                            ${variant.color || '-'}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control price-input" name="variants[${index}][price]" 
+                                   value="${formatPrice(basePrice)}" required>
+                            <span class="input-group-text">₫</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control price-input" name="variants[${index}][sale_price]" 
+                                   placeholder="Tùy chọn">
+                            <span class="input-group-text">₫</span>
+                        </div>
+                    </td>                    <td>
+                        <input type="number" class="form-control form-control-sm stock-input" name="variants[${index}][stock_quantity]" 
+                               placeholder="0" min="0" required>
+                    </td>
+                    <td>
+                        <input type="text" class="form-control form-control-sm" name="variants[${index}][sku]" 
+                               value="${variantSku}" required>
+                    </td>
+                    <td>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="variants[${index}][is_active]" 
+                                   value="1" checked>
+                        </div>
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-sm btn-outline-danger remove-variant">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                
+                variantsTableBody.appendChild(row);
+            } catch (error) {
+                console.error(`Error creating row ${index}:`, error, variant);
+            }
+        });
+        // Initialize bulk actions after table is generated
+        initializeBulkActionsCreate();
+        addRemoveVariantListeners();
+        addPriceFormatting(); // Add price formatting to new variant inputs
+    }
+
+    function initializeBulkActionsCreate() {
+        const selectAllCheckbox = document.getElementById('select-all-variants');
+        const deleteSelectedBtn = document.getElementById('delete-selected-variants');
+        
+        // Remove existing event listeners and add new ones
+        if (selectAllCheckbox) {
+            selectAllCheckbox.replaceWith(selectAllCheckbox.cloneNode(true));
+            const newSelectAllCheckbox = document.getElementById('select-all-variants');
+            
+            newSelectAllCheckbox.addEventListener('change', function() {
+                const variantCheckboxes = document.querySelectorAll('.variant-checkbox');
+                variantCheckboxes.forEach(checkbox => {
+                    checkbox.checked = this.checked;
+                });
+                updateBulkActionsCreate();
+            });
+        }
+
+        if (deleteSelectedBtn) {
+            deleteSelectedBtn.replaceWith(deleteSelectedBtn.cloneNode(true));
+            const newDeleteSelectedBtn = document.getElementById('delete-selected-variants');
+            
+            newDeleteSelectedBtn.addEventListener('click', function() {
+                const checkedCheckboxes = document.querySelectorAll('.variant-checkbox:checked');
+                
+                if (checkedCheckboxes.length === 0) {
+                    alert('Vui lòng chọn ít nhất một biến thể để xóa.');
+                    return;
+                }
+
+                if (confirm(`Bạn có chắc chắn muốn xóa ${checkedCheckboxes.length} biến thể đã chọn?`)) {
+                    checkedCheckboxes.forEach(checkbox => {
+                        const row = checkbox.closest('tr');
+                        if (row) {
+                            row.remove();
+                        }
+                    });
+                    
+                    reindexVariantsCreate();
+                    updateBulkActionsCreate();
+                    
+                    // Reset select all checkbox
+                    const selectAll = document.getElementById('select-all-variants');
+                    if (selectAll) {
+                        selectAll.checked = false;
+                        selectAll.indeterminate = false;
+                    }
+                }
+            });
+        }
+        
+        // Individual checkbox change handler
+        document.addEventListener('change', function(e) {
+            if (e.target.classList.contains('variant-checkbox')) {
+                updateBulkActionsCreate();
+                
+                // Update select all checkbox state
+                const allCheckboxes = document.querySelectorAll('.variant-checkbox');
+                const checkedCheckboxes = document.querySelectorAll('.variant-checkbox:checked');
+                const selectAll = document.getElementById('select-all-variants');
+                
+                if (selectAll) {
+                    if (checkedCheckboxes.length === 0) {
+                        selectAll.indeterminate = false;
+                        selectAll.checked = false;
+                    } else if (checkedCheckboxes.length === allCheckboxes.length) {
+                        selectAll.indeterminate = false;
+                        selectAll.checked = true;
+                    } else {
+                        selectAll.indeterminate = true;
+                        selectAll.checked = false;
+                    }
+                }
+            }
+        });
+    }
+
+    function updateBulkActionsCreate() {
+        const checkedCheckboxes = document.querySelectorAll('.variant-checkbox:checked');
+        const count = checkedCheckboxes.length;
+        const bulkActions = document.querySelector('.bulk-actions');
+        const selectedCountSpan = document.getElementById('selected-count');
+        
+        if (bulkActions) {
+            bulkActions.style.display = count > 0 ? 'block' : 'none';
+        }
+        
+        if (selectedCountSpan) {
+            selectedCountSpan.textContent = count;
+        }
+    }    function addRemoveVariantListeners() {
+        document.querySelectorAll('.remove-variant').forEach(button => {
+            // Skip if already has event listener
+            if (button.dataset.listenerAdded) return;
+            button.dataset.listenerAdded = 'true';
+            
+            button.addEventListener('click', function() {
+                if (confirm('Bạn có chắc chắn muốn xóa biến thể này?')) {
+                    this.closest('tr').remove();
+                    reindexVariantsCreate();
+                    updateBulkActionsCreate();
+                }
+            });
+        });
+    }
+
+    function reindexVariantsCreate() {
+        const rows = document.querySelectorAll('#variants-table-body tr');
+        rows.forEach((row, index) => {            row.querySelectorAll('input, select').forEach(input => {
+                if (input.name && input.name.includes('[')) {
+                    input.name = input.name.replace(/\[\d+\]/, `[${index}]`);
+                }
+            });
+        });
+    }    // Add price formatting to variant price inputs
+    function addPriceFormatting() {
+        // Handle existing price inputs (variant table only)
+        document.querySelectorAll('.price-input').forEach(input => {
+            // Skip main price inputs as they're already handled
+            if (input.id === 'price' || input.id === 'original_price') return;
+            
+            // Skip if already has event listeners
+            if (input.dataset.priceFormatted) return;
+            input.dataset.priceFormatted = 'true';
+            
+            // Format on input
+            input.addEventListener('input', function() {
+                const cursorPosition = this.selectionStart;
+                const oldLength = this.value.length;
+                const unformatted = unformatPrice(this.value);
+                const formatted = formatPrice(unformatted);
+                
+                this.value = formatted;
+                
+                // Restore cursor position
+                const newLength = formatted.length;
+                const newPosition = cursorPosition + (newLength - oldLength);
+                this.setSelectionRange(newPosition, newPosition);
+            });
+
+            // Format on blur
+            input.addEventListener('blur', function() {
+                const unformatted = unformatPrice(this.value);
+                this.value = formatPrice(unformatted);
+            });
+        });
+    }    // Initialize price formatting
+    addPriceFormatting();
+    
+    // Handle stock quantity inputs to prevent leading zeros
+    function handleStockInputs() {
+        // Handle main stock input
+        const mainStockInput = document.getElementById('stock_quantity');
+        if (mainStockInput) {
+            handleSingleStockInput(mainStockInput);
+        }
+        
+        // Handle variant stock inputs
+        document.querySelectorAll('.stock-input, input[name*="[stock_quantity]"]').forEach(input => {
+            handleSingleStockInput(input);
+        });
+    }
+    
+    function handleSingleStockInput(input) {
+        // Skip if already processed
+        if (input.dataset.stockProcessed) return;
+        input.dataset.stockProcessed = 'true';
+        
+        input.addEventListener('input', function() {
+            // Remove leading zeros
+            let value = this.value;
+            if (value.length > 1 && value.startsWith('0') && !value.includes('.')) {
+                this.value = value.replace(/^0+/, '') || '';
+            }
+        });
+        
+        input.addEventListener('blur', function() {
+            // Clean up the value on blur
+            let value = parseInt(this.value);
+            if (isNaN(value) || value < 0) {
+                this.value = '';
+            } else {
+                this.value = value;
+            }
+        });
+        
+        // Clear placeholder-like default values on first focus
+        let firstFocus = true;
+        input.addEventListener('focus', function() {
+            if (firstFocus && (this.value === '0' || this.value === this.placeholder)) {
+                this.value = '';
+                firstFocus = false;
+            }
+        });
+    }
+    
+    // Initialize stock input handlers
+    handleStockInputs();
+    
+    // Re-apply stock handlers when new variants are created
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'childList') {
+                handleStockInputs();
+            }
+        });
+    });
+    
+    const variantsContainer = document.getElementById('variants-table-body');
+    if (variantsContainer) {
+        observer.observe(variantsContainer, { childList: true, subtree: true });
+    }
+
+    // Test function - accessible from browser console
+    window.testVariants = function() {
+        console.log('=== TESTING VARIANTS FUNCTION ===');
+        
+        // Enable variants mode
+        const hasVariantsCheckbox = document.getElementById('has_variants');
+        if (hasVariantsCheckbox) {
+            hasVariantsCheckbox.checked = true;
+            hasVariantsCheckbox.dispatchEvent(new Event('change'));
+        }
+        
+        // Select some test sizes
+        const sizeS = document.getElementById('size_S');
+        const sizeM = document.getElementById('size_M');
+        if (sizeS) sizeS.checked = true;
+        if (sizeM) sizeM.checked = true;
+        
+        // Select some test colors
+        const colorRed = document.querySelector('.variant-color[value="Đỏ"]');
+        const colorBlue = document.querySelector('.variant-color[value="Xanh"]');
+        if (colorRed) colorRed.checked = true;
+        if (colorBlue) colorBlue.checked = true;
+        
+        // Set test price
+        const priceInput = document.getElementById('price');
+        if (priceInput) priceInput.value = '500000';
+        
+        // Click generate button
+        const generateBtn = document.getElementById('generate-variants-btn');
+        if (generateBtn) {
+            console.log('Clicking generate button...');
+            generateBtn.click();
+        } else {
+            console.error('Generate button not found!');
+        }
+    };    console.log('=== TEST FUNCTION READY ===');
+    console.log('Run "testVariants()" in console to test variants generation');
+});
+
+// Load simple fix
+const fixScript = document.createElement('script');
+fixScript.src = '/variants-fix.js';
+document.head.appendChild(fixScript);
+
+// Load debug script
+const debugScript = document.createElement('script');
+debugScript.src = '/js/debug-form.js';
+document.head.appendChild(debugScript);// Form submission handler to convert formatted prices back to numbers
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                console.log('=== FORM SUBMISSION ===');
+                
+                // Convert all formatted prices back to numbers before submission
+                document.querySelectorAll('.price-input').forEach(input => {
+                    if (input.value) {
+                        const originalValue = input.value;
+                        input.value = unformatPrice(input.value);
+                        console.log(`Price converted: ${originalValue} → ${input.value}`);
+                    }
+                });
+                
+                // Check if has_variants is checked
+                const hasVariantsCheckbox = document.getElementById('has_variants');
+                const hasVariants = hasVariantsCheckbox ? hasVariantsCheckbox.checked : false;
+                console.log('Has variants:', hasVariants);
+                
+                if (hasVariants) {
+                    const variantRows = document.querySelectorAll('#variants-table-body tr');
+                    console.log('Number of variant rows:', variantRows.length);
+                    
+                    if (variantRows.length === 0) {
+                        e.preventDefault();
+                        alert('Vui lòng tạo ít nhất một biến thể hoặc tắt chế độ variants.');
+                        
+                        // Re-format prices since we prevented submission
+                        document.querySelectorAll('.price-input').forEach(input => {
+                            if (input.value) {
+                                input.value = formatPrice(input.value);
+                            }
+                        });
+                        
+                        return false;
+                    }
+                }
+                
+                console.log('Form submission allowed');
+            });
         }
     });
-});
 </script>
 @endpush

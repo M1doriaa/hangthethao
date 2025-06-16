@@ -2,7 +2,52 @@
 
 @section('title', 'Trang chủ - Hang The Thao')
 
+@push('styles')
+<style>
+    .alert-success {
+        background: linear-gradient(135deg, #d4edda, #c3e6cb);
+        border: none;
+        color: #155724;
+    }
+    
+    .alert-success .fas.fa-check-circle {
+        color: #28a745;
+    }
+    
+    .alert-success .alert-heading {
+        color: #155724;
+        font-weight: 600;
+    }
+    
+    .alert-success .btn-close {
+        filter: brightness(0.8);
+    }
+</style>
+@endpush
+
 @section('content')
+<!-- Thông báo đặt hàng thành công -->
+@if(session('success'))
+<div class="alert alert-success alert-dismissible fade show" role="alert" style="margin: 0; border-radius: 0;">
+    <div class="container">
+        <div class="d-flex align-items-center">
+            <i class="fas fa-check-circle me-3" style="font-size: 1.5rem;"></i>
+            <div class="flex-grow-1">
+                <h5 class="alert-heading mb-1">🎉 {{ session('success') }}</h5>
+                @if(session('order_number'))
+                    <p class="mb-1"><strong>Mã đơn hàng:</strong> {{ session('order_number') }}</p>
+                @endif
+                @if(session('order_total'))
+                    <p class="mb-1"><strong>Tổng tiền:</strong> {{ session('order_total') }}</p>
+                @endif
+                <small class="text-muted">Chúng tôi sẽ liên hệ với bạn sớm nhất để xác nhận đơn hàng.</small>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+@endif
+
 <!-- Hero Section -->
 <section class="hero-section">
     <div class="container">
@@ -86,15 +131,11 @@
                                  class="card-img-top product-image" 
                                  alt="{{ $product['name'] }}"
                                  style="height: 220px; object-fit: cover;">
-                        </a>
-                        <!-- Hover overlay with quick action -->
+                        </a>                        <!-- Hover overlay with quick action -->
                         <div class="product-overlay">
                             <div class="overlay-content">
-                                <button class="btn btn-light btn-sm rounded-pill mb-2" onclick="quickView({{ $product['id'] }})">
+                                <button class="btn btn-light btn-sm rounded-pill" onclick="quickView({{ $product['id'] }})">
                                     <i class="fas fa-eye me-1"></i>Xem nhanh
-                                </button>
-                                <button class="btn btn-danger btn-sm rounded-pill" onclick="addToCartQuick({{ $product['id'] }})">
-                                    <i class="fas fa-cart-plus me-1"></i>Thêm vào giỏ
                                 </button>
                             </div>
                         </div>
@@ -147,8 +188,7 @@
             <div class="col-auto">
                 <a href="{{ route('category.index', 'ao-clb') }}" class="text-decoration-none">Xem thêm <i class="fas fa-arrow-right"></i></a>
             </div>
-        </div><div class="row g-4">
-            @foreach($footballJerseys as $jersey)
+        </div><div class="row g-4">            @foreach($footballJerseys as $jersey)
             <div class="col-lg-2 col-md-4 col-6">
                 <div class="product-card card h-100 border-0 shadow-sm">
                     <div class="position-relative overflow-hidden">
@@ -161,11 +201,8 @@
                         <!-- Hover overlay with quick action -->
                         <div class="product-overlay">
                             <div class="overlay-content">
-                                <button class="btn btn-light btn-sm rounded-pill mb-2" onclick="quickView({{ $jersey['id'] }})">
+                                <button class="btn btn-light btn-sm rounded-pill" onclick="quickView({{ $jersey['id'] }})">
                                     <i class="fas fa-eye me-1"></i>Xem nhanh
-                                </button>
-                                <button class="btn btn-danger btn-sm rounded-pill" onclick="addToCartQuick({{ $jersey['id'] }})">
-                                    <i class="fas fa-cart-plus me-1"></i>Thêm vào giỏ
                                 </button>
                             </div>
                         </div>
@@ -220,8 +257,7 @@
                 <a href="{{ route('category.index', 'ao-doi-tuyen') }}" class="text-decoration-none">Xem thêm <i class="fas fa-arrow-right"></i></a>
             </div>
         </div>
-          <div class="row g-4">
-            @foreach($nationalTeamJerseys as $jersey)
+          <div class="row g-4">            @foreach($nationalTeamJerseys as $jersey)
             <div class="col-lg-2 col-md-4 col-6">
                 <div class="product-card card h-100 border-0 shadow-sm">
                     <div class="position-relative overflow-hidden">
@@ -234,11 +270,8 @@
                         <!-- Hover overlay with quick action -->
                         <div class="product-overlay">
                             <div class="overlay-content">
-                                <button class="btn btn-light btn-sm rounded-pill mb-2" onclick="quickView({{ $jersey['id'] }})">
+                                <button class="btn btn-light btn-sm rounded-pill" onclick="quickView({{ $jersey['id'] }})">
                                     <i class="fas fa-eye me-1"></i>Xem nhanh
-                                </button>
-                                <button class="btn btn-danger btn-sm rounded-pill" onclick="addToCartQuick({{ $jersey['id'] }})">
-                                    <i class="fas fa-cart-plus me-1"></i>Thêm vào giỏ
                                 </button>
                             </div>
                         </div>
@@ -318,127 +351,10 @@
             }
         });
     });
-    
-    // Quick view function
+      // Quick view function
     function quickView(productId) {
-        // Show a modal or open product in a lightbox
-        // For now, we'll redirect to product page
+        // Redirect to product detail page
         window.location.href = `/products/${productId}`;
-    }
-      // Add to cart quickly
-    function addToCartQuick(productId) {
-        // Show loading state
-        const button = event.target.closest('button');
-        const originalText = button.innerHTML;
-        button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Đang thêm...';
-        button.disabled = true;
-        
-        // Get product data from the card
-        const productCard = button.closest('.product-card');
-        const productName = productCard.querySelector('.product-name a').textContent.trim();
-        const productImage = productCard.querySelector('.product-image').src;
-        const priceElement = productCard.querySelector('.current-price');
-        const priceText = priceElement.textContent.replace(/[^\d]/g, ''); // Extract numbers only
-        const price = parseInt(priceText);
-        
-        // Prepare data for API call
-        const formData = new FormData();
-        formData.append('id', productId);
-        formData.append('name', productName);
-        formData.append('price', price);
-        formData.append('quantity', 1);
-        formData.append('image', productImage);
-        formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
-        
-        // Make AJAX call to add to cart
-        fetch('/cart/add', {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Reset button to success state
-                button.innerHTML = '<i class="fas fa-check me-1"></i>Đã thêm!';
-                button.classList.remove('btn-danger');
-                button.classList.add('btn-success');
-                
-                // Show success message
-                showToast(data.message, 'success');
-                  // Update cart count in header if exists
-                const cartBadge = document.querySelector('#header-cart-count');
-                if (cartBadge && data.cart_count) {
-                    cartBadge.textContent = data.cart_count;
-                    cartBadge.classList.add('cart-pulse');
-                    setTimeout(() => cartBadge.classList.remove('cart-pulse'), 600);
-                }
-                
-                // Reset button after 2 seconds
-                setTimeout(() => {
-                    button.innerHTML = originalText;
-                    button.classList.remove('btn-success');
-                    button.classList.add('btn-danger');
-                    button.disabled = false;
-                }, 2000);
-            } else {
-                throw new Error(data.message || 'Có lỗi xảy ra');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            
-            // Reset button to error state
-            button.innerHTML = '<i class="fas fa-times me-1"></i>Lỗi!';
-            button.classList.remove('btn-danger');
-            button.classList.add('btn-warning');
-            
-            // Show error message
-            showToast('Có lỗi xảy ra khi thêm sản phẩm!', 'error');
-            
-            // Reset button after 2 seconds
-            setTimeout(() => {
-                button.innerHTML = originalText;
-                button.classList.remove('btn-warning');
-                button.classList.add('btn-danger');
-                button.disabled = false;
-            }, 2000);
-        });
-    }
-    
-    // Toast notification function
-    function showToast(message, type = 'info') {
-        // Create toast element
-        const toast = document.createElement('div');
-        toast.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : 'primary'} border-0`;
-        toast.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 9999;';
-        toast.setAttribute('role', 'alert');
-        toast.innerHTML = `
-            <div class="d-flex">
-                <div class="toast-body">
-                    <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'} me-2"></i>
-                    ${message}
-                </div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-            </div>
-        `;
-        
-        document.body.appendChild(toast);
-        
-        // Initialize Bootstrap toast
-        const bsToast = new bootstrap.Toast(toast, {
-            autohide: true,
-            delay: 3000
-        });
-        bsToast.show();
-        
-        // Remove toast after it's hidden
-        toast.addEventListener('hidden.bs.toast', () => {
-            toast.remove();
-        });
     }
 </script>
 @endpush

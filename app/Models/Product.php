@@ -28,7 +28,9 @@ class Product extends Model
         'specifications',
         'meta_title',
         'meta_description',
-        'slug'
+        'slug',
+        'has_variants',
+        'variant_options'
     ];
 
     protected $casts = [
@@ -36,11 +38,13 @@ class Product extends Model
         'sizes' => 'array',
         'colors' => 'array',
         'specifications' => 'array',
+        'variant_options' => 'array',
         'price' => 'decimal:2',
         'original_price' => 'decimal:2',
         'rating' => 'decimal:2',
         'is_featured' => 'boolean',
         'is_active' => 'boolean',
+        'has_variants' => 'boolean'
     ];
 
     // Accessor for main image
@@ -96,6 +100,108 @@ class Product extends Model
         return $this->belongsTo(Category::class, 'category', 'slug');
     }
 
+    // Relationship with product variants
+    public function variants()
+    {
+        return $this->hasMany(ProductVariant::class);
+    }
+
+    // Get active variants
+    public function activeVariants()
+    {
+        return $this->hasMany(ProductVariant::class)->where('is_active', true);
+    }
+
+    // Get available sizes from variants
+    public function getAvailableSizes()
+    {
+        if (!$this->has_variants) {
+            return $this->sizes ?? [];
+        }
+        
+        return $this->activeVariants()
+            ->whereNotNull('size')
+            ->pluck('size')
+            ->unique()
+            ->values()
+            ->toArray();
+    }
+
+    // Get available colors from variants
+    public function getAvailableColors()
+    {
+        if (!$this->has_variants) {
+            return $this->colors ?? [];
+        }
+        
+        return $this->activeVariants()
+            ->whereNotNull('color')
+            ->pluck('color')
+            ->unique()
+            ->values()
+            ->toArray();
+    }
+
+    // Get price range for product with variants
+    public function getPriceRange()
+    {
+        if (!$this->has_variants) {
+            return [
+                'min' => $this->price,
+                'max' => $this->price
+            ];
+        }
+
+        $variants = $this->activeVariants()->get();
+        if ($variants->isEmpty()) {
+            return [
+                'min' => $this->price,
+                'max' => $this->price
+            ];
+        }
+
+        $prices = $variants->map(function ($variant) {
+            return $variant->getCurrentPrice();
+        });
+
+        return [
+            'min' => $prices->min(),
+            'max' => $prices->max()
+        ];
+    }
+
+    // Get variant by size and color
+    public function getVariant($size = null, $color = null)
+    {
+        if (!$this->has_variants) {
+            return null;
+        }
+
+        $query = $this->activeVariants();
+        
+        if ($size) {
+            $query->where('size', $size);
+        }
+        
+        if ($color) {
+            $query->where('color', $color);
+        }
+
+        return $query->first();
+    }
+
+    // Get cheapest variant
+    public function getCheapestVariant()
+    {
+        if (!$this->has_variants) {
+            return null;
+        }
+
+        return $this->activeVariants()
+            ->orderBy('price', 'asc')
+            ->first();
+    }
+
     // Scope for category by ID
     public function scopeByCategory($query, $categorySlugOrId)
     {
@@ -117,5 +223,37 @@ class Product extends Model
     public function generateSlug()
     {
         return \Str::slug($this->name);
+    }
+
+    /**
+     * Get the reviews for the product
+     */
+    public function reviews()
+    {
+        return $this->hasMany(Review::class);
+    }
+
+    /**
+     * Get approved reviews for the product
+     */
+    public function approvedReviews()
+    {
+        return $this->hasMany(Review::class)->where('is_approved', true);
+    }
+
+    /**
+     * Get average rating from approved reviews
+     */
+    public function getAverageRatingAttribute()
+    {
+        return $this->approvedReviews()->avg('rating') ?? 0;
+    }
+
+    /**
+     * Get total reviews count (approved only)
+     */
+    public function getReviewsCountAttribute()
+    {
+        return $this->approvedReviews()->count();
     }
 }

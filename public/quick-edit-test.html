@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Edit Form Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .step { margin: 15px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .step h3 { margin-top: 0; color: #333; }
+        .action-btn { padding: 8px 15px; margin: 5px; background: #007bff; color: white; border: none; cursor: pointer; border-radius: 3px; }
+        .action-btn:hover { background: #0056b3; }
+        .code { background: #f8f9fa; padding: 2px 6px; border-radius: 3px; font-family: monospace; }
+        .result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        .warning { background: #fff3cd; color: #856404; }
+    </style>
+</head>
+<body>
+    <h1>Quick Edit Form Debug Test</h1>
+    
+    <div class="step">
+        <h3>Step 1: Open Edit Page</h3>
+        <p>Click button below to open the edit page in a new tab:</p>
+        <button class="action-btn" onclick="openEditPage()">Open Edit Page</button>
+        <div id="step1-result"></div>
+    </div>
+    
+    <div class="step">
+        <h3>Step 2: Run Debug Commands</h3>
+        <p>After opening the edit page, open Developer Tools (F12) and run these commands in Console:</p>
+        <ol>
+            <li>Check if functions are available: <span class="code">typeof debugEditForm</span></li>
+            <li>Run debug check: <span class="code">debugEditForm()</span></li>
+            <li>Test variant generation: <span class="code">testEditVariantGeneration()</span></li>
+        </ol>
+        <button class="action-btn" onclick="showInstructions()">Show Detailed Instructions</button>
+        <div id="step2-result"></div>
+    </div>
+    
+    <div class="step">
+        <h3>Step 3: Manual Test</h3>
+        <p>If debug functions work, try manual test:</p>
+        <ol>
+            <li>Check "Sản phẩm có biến thể" checkbox</li>
+            <li>Select some sizes and colors</li>
+            <li>Click "Tạo biến thể" button</li>
+            <li>Check if variants table is updated</li>
+        </ol>
+        <div id="step3-result"></div>
+    </div>
+    
+    <div class="step">
+        <h3>Expected Results</h3>
+        <div class="info result">
+            <strong>What should happen:</strong>
+            <ul>
+                <li>Debug functions should be available (typeof returns "function")</li>
+                <li>debugEditForm() should show all elements as "true"</li>
+                <li>testEditVariantGeneration() should auto-select options and click button</li>
+                <li>Variants table should update with new rows</li>
+                <li>Console should show logs about variant creation</li>
+            </ul>
+        </div>
+        
+        <div class="warning result">
+            <strong>Common Issues:</strong>
+            <ul>
+                <li>If functions are "undefined" → JavaScript not loaded properly</li>
+                <li>If elements show "false" → HTML structure issue</li>
+                <li>If button click doesn't work → Event listener not attached</li>
+                <li>If variants not created → Logic error in generateVariantsTable</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function openEditPage() {
+            const editWindow = window.open('/admin/products/21/edit', '_blank');
+            const resultDiv = document.getElementById('step1-result');
+            
+            if (editWindow) {
+                resultDiv.innerHTML = '<div class="success result">✅ Edit page opened successfully! Switch to the new tab and follow Step 2.</div>';
+                
+                // Try to communicate with the new window after it loads
+                setTimeout(() => {
+                    try {
+                        if (editWindow.debugEditForm) {
+                            resultDiv.innerHTML += '<div class="success result">✅ Debug functions detected in new window!</div>';
+                        } else {
+                            resultDiv.innerHTML += '<div class="warning result">⚠️ Debug functions not yet available. Wait for page to fully load.</div>';
+                        }
+                    } catch (e) {
+                        resultDiv.innerHTML += '<div class="info result">ℹ️ Cannot check functions due to cross-origin policy. Check manually in the new tab.</div>';
+                    }
+                }, 3000);
+            } else {
+                resultDiv.innerHTML = '<div class="error result">❌ Could not open edit page. Please check if popup is blocked.</div>';
+            }
+        }
+        
+        function showInstructions() {
+            const resultDiv = document.getElementById('step2-result');
+            resultDiv.innerHTML = `
+                <div class="info result">
+                    <h4>Detailed Console Commands:</h4>
+                    <p><strong>1. Check functions availability:</strong></p>
+                    <pre style="background: #f8f9fa; padding: 10px; border-radius: 3px;">
+// Should return "function" if available
+typeof debugEditForm
+typeof testEditVariantGeneration
+                    </pre>
+                    
+                    <p><strong>2. Run element check:</strong></p>
+                    <pre style="background: #f8f9fa; padding: 10px; border-radius: 3px;">
+// Should show all elements as found (true)
+debugEditForm()
+                    </pre>
+                    
+                    <p><strong>3. Test automatic variant generation:</strong></p>
+                    <pre style="background: #f8f9fa; padding: 10px; border-radius: 3px;">
+// Should auto-select options and trigger generation
+testEditVariantGeneration()
+                    </pre>
+                    
+                    <p><strong>4. Manual button test:</strong></p>
+                    <pre style="background: #f8f9fa; padding: 10px; border-radius: 3px;">
+// Test button directly
+document.getElementById('generate-variants').click()
+                    </pre>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

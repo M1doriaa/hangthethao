@@ -6,30 +6,46 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\Cart;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class CheckoutController extends Controller
-{    /**
+{
+    /**
      * Hiển thị trang thanh toán
      */
     public function index()
     {
-        // Lấy cart data từ session
-        $cartItems = session()->get('cart', []);
+        // Lấy cart items từ database cho user hiện tại hoặc session
+        if (auth()->check()) {
+            $cartItems = Cart::with(['product', 'variant'])
+                ->where('user_id', auth()->id())
+                ->get();
+        } else {
+            $sessionId = session()->getId();
+            $cartItems = Cart::with(['product', 'variant'])
+                ->where('session_id', $sessionId)
+                ->get();
+        }
         
         // Nếu giỏ hàng trống, redirect về trang chủ
-        if (empty($cartItems)) {
+        if ($cartItems->isEmpty()) {
             return redirect()->route('home')->with('error', 'Giỏ hàng trống. Vui lòng thêm sản phẩm để thanh toán.');
         }
-        
-        // Tính tổng tiền
+
+        // Tính tổng giá trị đơn hàng
         $total = 0;
         foreach ($cartItems as $item) {
-            $total += $item['price'] * $item['quantity'];
+            if (isset($item->variant) && $item->variant) {
+                $total += $item->variant->price * $item->quantity;
+            } else {
+                $total += $item->price * $item->quantity;
+            }
         }
-
-        return view('checkout.index', compact('cartItems', 'total'));
+        
+        // Hiển thị checkout page
+        return view('checkout.simple', compact('cartItems', 'total'));
     }
 
     /**
@@ -38,31 +54,37 @@ class CheckoutController extends Controller
     public function process(Request $request)
     {
         $request->validate([
-            'email' => 'required|email',
-            'phone' => 'required|string',
-            'full_name' => 'required|string',
-            'city' => 'required|string',
-            'district' => 'required|string',
-            'ward' => 'required|string',
-            'address' => 'required|string',
+            'customer_name' => 'required|string|max:255',
+            'customer_phone' => 'required|string|max:20',
+            'customer_email' => 'nullable|email|max:255',
+            'customer_address' => 'required|string|max:500',
+            'province' => 'nullable|string|max:100',
+            'district' => 'nullable|string|max:100',
+            'ward' => 'nullable|string|max:100',
             'payment_method' => 'required|string|in:cod,bank_transfer,momo',
+            'notes' => 'nullable|string|max:1000',
         ], [
-            'email.required' => 'Vui lòng nhập email',
-            'email.email' => 'Email không đúng định dạng',
-            'phone.required' => 'Vui lòng nhập số điện thoại',
-            'full_name.required' => 'Vui lòng nhập họ tên',
-            'city.required' => 'Vui lòng chọn tỉnh/thành phố',
-            'district.required' => 'Vui lòng chọn quận/huyện',
-            'ward.required' => 'Vui lòng chọn phường/xã',
-            'address.required' => 'Vui lòng nhập địa chỉ',
+            'customer_name.required' => 'Vui lòng nhập họ tên',
+            'customer_phone.required' => 'Vui lòng nhập số điện thoại',
+            'customer_email.email' => 'Email không đúng định dạng',
+            'customer_address.required' => 'Vui lòng nhập địa chỉ giao hàng',
             'payment_method.required' => 'Vui lòng chọn phương thức thanh toán',
             'payment_method.in' => 'Phương thức thanh toán không hợp lệ',
         ]);
 
-        // Lấy cart items từ session
-        $cartItems = session()->get('cart', []);
+        // Lấy cart items từ database
+        if (auth()->check()) {
+            $cartItems = Cart::with(['product', 'variant'])
+                ->where('user_id', auth()->id())
+                ->get();
+        } else {
+            $sessionId = session()->getId();
+            $cartItems = Cart::with(['product', 'variant'])
+                ->where('session_id', $sessionId)
+                ->get();
+        }
         
-        if (empty($cartItems)) {
+        if ($cartItems->isEmpty()) {
             return redirect()->route('cart.index')->with('error', 'Giỏ hàng trống!');
         }
 
@@ -73,80 +95,99 @@ class CheckoutController extends Controller
             $subtotal = 0;
             $validCartItems = [];
 
-            foreach ($cartItems as $productId => $item) {
-                // Kiểm tra sản phẩm còn tồn tại và đủ số lượng
-                $product = Product::active()->find($productId);
+            foreach ($cartItems as $cartItem) {
+                $product = $cartItem->product;
                 
                 if (!$product) {
-                    throw new \Exception("Sản phẩm {$item['name']} không còn tồn tại");
+                    throw new \Exception("Sản phẩm không còn tồn tại");
                 }
                 
-                if ($product->stock_quantity < $item['quantity']) {
+                $variant = $cartItem->variant;
+                $price = $variant ? $variant->price : $product->price;
+                $total = $price * $cartItem->quantity;
+                
+                // Kiểm tra stock (chỉ với sản phẩm không có variant)
+                if (!$variant && $product->stock_quantity < $cartItem->quantity) {
                     throw new \Exception("Sản phẩm {$product->name} chỉ còn {$product->stock_quantity} sản phẩm");
                 }
 
                 $validCartItems[] = [
+                    'cart_item' => $cartItem,
                     'product' => $product,
-                    'quantity' => $item['quantity'],
-                    'size' => $item['size'] ?? null,
-                    'color' => $item['color'] ?? null,
-                    'price' => $product->price,
-                    'total' => $product->price * $item['quantity']
+                    'variant' => $variant,
+                    'quantity' => $cartItem->quantity,
+                    'price' => $price,
+                    'total' => $total
                 ];
 
-                $subtotal += $product->price * $item['quantity'];
+                $subtotal += $total;
             }
 
-            // Tính phí vận chuyển (cố định 30,000đ)
-            $shippingFee = 30000;
-            $tax = 0; // Có thể tính thuế VAT 10% nếu cần
-            $total = $subtotal + $shippingFee + $tax;
+            // Phí vận chuyển miễn phí
+            $shippingFee = 0;
+            $tax = 0;
+            $total = $subtotal + $shippingFee + $tax;            // Tạo địa chỉ đầy đủ
+            $fullAddress = $request->customer_address;
+            if ($request->ward) $fullAddress = $request->ward . ', ' . $fullAddress;
+            if ($request->district) $fullAddress = $request->district . ', ' . $fullAddress;
+            if ($request->province) $fullAddress = $request->province . ', ' . $fullAddress;
 
             // Tạo đơn hàng
             $order = Order::create([
                 'order_number' => Order::generateOrderNumber(),
-                'customer_name' => $request->full_name,
-                'customer_email' => $request->email,
-                'customer_phone' => $request->phone,
-                'shipping_address' => $request->address,
-                'city' => $request->city,
-                'district' => $request->district,
-                'ward' => $request->ward,
+                'customer_name' => $request->customer_name,
+                'customer_email' => $request->customer_email,
+                'customer_phone' => $request->customer_phone,
+                'shipping_address' => $fullAddress,
+                'city' => $request->province ?? '',
+                'district' => $request->district ?? '',
+                'ward' => $request->ward ?? '',
                 'payment_method' => $request->payment_method,
                 'status' => 'pending',
                 'subtotal' => $subtotal,
                 'shipping_fee' => $shippingFee,
                 'tax' => $tax,
                 'total' => $total,
+                'notes' => $request->notes ?? '',
             ]);
 
-            // Tạo order items và cập nhật stock
+            // Tạo order items
             foreach ($validCartItems as $item) {
                 OrderItem::create([
                     'order_id' => $order->id,
                     'product_id' => $item['product']->id,
                     'product_name' => $item['product']->name,
-                    'product_image' => $item['product']->main_image,
-                    'size' => $item['size'],
-                    'color' => $item['color'],
+                    'product_image' => $item['product']->image,
+                    'size' => $item['variant'] ? $item['variant']->size : null,
+                    'color' => $item['variant'] ? $item['variant']->color : null,
                     'price' => $item['price'],
                     'quantity' => $item['quantity'],
                     'total' => $item['total'],
                 ]);
 
-                // Giảm số lượng tồn kho
-                $item['product']->decrement('stock_quantity', $item['quantity']);
+                // Giảm số lượng tồn kho (chỉ với sản phẩm không có variant)
+                if (!$item['variant']) {
+                    $item['product']->decrement('stock_quantity', $item['quantity']);
+                }
             }
 
             DB::commit();
 
             // Xóa giỏ hàng sau khi đặt hàng thành công
-            session()->forget('cart');
+            if (auth()->check()) {
+                Cart::where('user_id', auth()->id())->delete();
+            } else {
+                Cart::where('session_id', session()->getId())->delete();
+            }
 
-            // Lưu order_id vào session để hiển thị ở trang success
+            // Lưu order_id vào session để hiển thị thông báo
             session(['last_order_id' => $order->id]);
 
-            return redirect()->route('checkout.success')->with('success', 'Đặt hàng thành công!');
+            return redirect()->route('home')->with([
+                'success' => 'Đặt hàng thành công! Mã đơn hàng: ' . $order->order_number,
+                'order_number' => $order->order_number,
+                'order_total' => number_format($order->total, 0, ',', '.') . 'đ'
+            ]);
             
         } catch (\Exception $e) {
             DB::rollback();

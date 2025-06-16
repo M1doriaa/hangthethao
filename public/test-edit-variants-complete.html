@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Tạo Biến Thể - Edit Form</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { padding: 20px; }
+        .test-section { margin-bottom: 30px; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+        .console-output { 
+            background: #1e1e1e; 
+            color: #00ff00; 
+            padding: 15px; 
+            font-family: 'Courier New', monospace; 
+            min-height: 200px; 
+            max-height: 400px;
+            overflow-y: auto;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+        .color-preview {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 1px solid #ddd;
+            margin-right: 5px;
+        }
+        .btn-test { margin: 5px; }
+        .error-msg { color: #ff6b6b; }
+        .success-msg { color: #51cf66; }
+        .info-msg { color: #74c0fc; }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <h2><i class="fas fa-tools"></i> Test Tạo Biến Thể - Edit Form</h2>
+        
+        <div class="row">
+            <div class="col-md-8">
+                <div class="test-section">
+                    <h4>Mock Edit Product Form</h4>
+                    
+                    <!-- Basic Product Info -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Tên sản phẩm:</label>
+                            <input type="text" class="form-control" id="name" value="Áo thể thao Test">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">SKU:</label>
+                            <input type="text" class="form-control" id="sku" value="TST001">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Giá bán (₫):</label>
+                            <input type="text" class="form-control" id="price" value="150,000">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Giá gốc (₫):</label>
+                            <input type="text" class="form-control" id="original_price" value="200,000">
+                        </div>
+                    </div>
+                    
+                    <!-- Has Variants Toggle -->
+                    <div class="form-check form-switch mb-4">
+                        <input class="form-check-input" type="checkbox" id="has_variants" name="has_variants">
+                        <label class="form-check-label" for="has_variants">
+                            <strong>Sản phẩm có nhiều biến thể (size, màu sắc)</strong>
+                        </label>
+                    </div>
+                    
+                    <!-- Simple Product Section -->
+                    <div id="simple-product-section" class="alert alert-info">
+                        <h5><i class="fas fa-info-circle"></i> Sản phẩm đơn giản</h5>
+                        <p>Sản phẩm chỉ có một phiên bản với giá và số lượng cố định.</p>
+                    </div>
+                    
+                    <!-- Variants Section -->
+                    <div id="variants-section" style="display: none;">
+                        <h5><i class="fas fa-layer-group"></i> Cấu hình biến thể</h5>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <h6>Kích thước:</h6>
+                                <div class="form-check">
+                                    <input class="form-check-input variant-size" type="checkbox" value="S" id="size_S">
+                                    <label class="form-check-label" for="size_S">S (Small)</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input variant-size" type="checkbox" value="M" id="size_M">
+                                    <label class="form-check-label" for="size_M">M (Medium)</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input variant-size" type="checkbox" value="L" id="size_L">
+                                    <label class="form-check-label" for="size_L">L (Large)</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input variant-size" type="checkbox" value="XL" id="size_XL">
+                                    <label class="form-check-label" for="size_XL">XL (Extra Large)</label>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <h6>Màu sắc:</h6>
+                                <div class="form-check">
+                                    <input class="form-check-input variant-color" type="checkbox" value="Đỏ" data-color-code="#dc3545" id="color_red">
+                                    <label class="form-check-label" for="color_red">
+                                        <span class="color-preview" style="background-color: #dc3545;"></span>Đỏ
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input variant-color" type="checkbox" value="Xanh dương" data-color-code="#0d6efd" id="color_blue">
+                                    <label class="form-check-label" for="color_blue">
+                                        <span class="color-preview" style="background-color: #0d6efd;"></span>Xanh dương
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input variant-color" type="checkbox" value="Trắng" data-color-code="#ffffff" id="color_white">
+                                    <label class="form-check-label" for="color_white">
+                                        <span class="color-preview" style="background-color: #ffffff;"></span>Trắng
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input variant-color" type="checkbox" value="Đen" data-color-code="#000000" id="color_black">
+                                    <label class="form-check-label" for="color_black">
+                                        <span class="color-preview" style="background-color: #000000;"></span>Đen
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <button type="button" class="btn btn-primary" id="generate-variants">
+                                <i class="fas fa-magic"></i> Tạo bảng biến thể
+                            </button>
+                        </div>
+                        
+                        <!-- Variants Table Container -->
+                        <div id="variants-table-container" class="mt-3">
+                            <!-- Table sẽ được tạo bằng JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="test-section">
+                    <h4><i class="fas fa-terminal"></i> Test Console</h4>
+                    <div class="console-output" id="console-output">
+                        <div class="info-msg">=== TEST CONSOLE READY ===</div>
+                        <div>Chờ load các function...</div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <button class="btn btn-sm btn-primary btn-test" onclick="runDebugTest()">
+                            <i class="fas fa-bug"></i> Debug Elements
+                        </button>
+                        <button class="btn btn-sm btn-success btn-test" onclick="runVariantTest()">
+                            <i class="fas fa-play"></i> Test Generate
+                        </button>
+                        <button class="btn btn-sm btn-info btn-test" onclick="selectSampleVariants()">
+                            <i class="fas fa-check-square"></i> Select Sample
+                        </button>
+                        <button class="btn btn-sm btn-warning btn-test" onclick="clearConsole()">
+                            <i class="fas fa-eraser"></i> Clear
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="test-section">
+                    <h5><i class="fas fa-chart-bar"></i> Thống kê</h5>
+                    <div id="stats">
+                        <div>Sizes selected: <span id="sizes-count">0</span></div>
+                        <div>Colors selected: <span id="colors-count">0</span></div>
+                        <div>Total variants: <span id="total-variants">0</span></div>
+                        <div>Has variants: <span id="has-variants-status">No</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let consoleOutput = document.getElementById('console-output');
+        
+        function log(message, type = 'info') {
+            const className = type === 'error' ? 'error-msg' : 
+                             type === 'success' ? 'success-msg' : 'info-msg';
+            consoleOutput.innerHTML += '<div class="' + className + '">' + new Date().toLocaleTimeString() + ' - ' + message + '</div>';
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        }
+        
+        function clearConsole() {
+            consoleOutput.innerHTML = '<div class="info-msg">=== CONSOLE CLEARED ===</div>';
+        }
+        
+        function updateStats() {
+            const sizesSelected = document.querySelectorAll('.variant-size:checked').length;
+            const colorsSelected = document.querySelectorAll('.variant-color:checked').length;
+            const hasVariants = document.getElementById('has_variants').checked;
+            const totalVariants = document.querySelectorAll('#variants-table tbody tr').length;
+            
+            document.getElementById('sizes-count').textContent = sizesSelected;
+            document.getElementById('colors-count').textContent = colorsSelected;
+            document.getElementById('total-variants').textContent = totalVariants;
+            document.getElementById('has-variants-status').textContent = hasVariants ? 'Yes' : 'No';
+        }
+        
+        function selectSampleVariants() {
+            log('Selecting sample variants...', 'info');
+            
+            // Enable variants mode
+            document.getElementById('has_variants').checked = true;
+            document.getElementById('has_variants').dispatchEvent(new Event('change'));
+            
+            // Select some sizes and colors
+            document.getElementById('size_M').checked = true;
+            document.getElementById('size_L').checked = true;
+            document.getElementById('color_red').checked = true;
+            document.getElementById('color_blue').checked = true;
+            
+            updateStats();
+            log('Selected: M, L sizes and Red, Blue colors', 'success');
+        }
+        
+        function runDebugTest() {
+            log('=== RUNNING DEBUG TEST ===', 'info');
+            
+            const elements = {
+                hasVariants: document.getElementById('has_variants'),
+                generateBtn: document.getElementById('generate-variants'),
+                variantsSection: document.getElementById('variants-section'),
+                simpleSection: document.getElementById('simple-product-section'),
+                tableContainer: document.getElementById('variants-table-container')
+            };
+            
+            log('Checking elements:', 'info');
+            Object.entries(elements).forEach(([key, element]) => {
+                const status = element ? 'FOUND' : 'NOT FOUND';
+                const type = element ? 'success' : 'error';
+                log(`  ${key}: ${status}`, type);
+            });
+            
+            const sizeCheckboxes = document.querySelectorAll('.variant-size').length;
+            const colorCheckboxes = document.querySelectorAll('.variant-color').length;
+            log(`Variant options: ${sizeCheckboxes} sizes, ${colorCheckboxes} colors`, 'info');
+            
+            updateStats();
+        }
+        
+        function runVariantTest() {
+            log('=== RUNNING VARIANT GENERATION TEST ===', 'info');
+            
+            const hasVariants = document.getElementById('has_variants');
+            if (!hasVariants.checked) {
+                log('Enabling variants mode...', 'info');
+                hasVariants.checked = true;
+                hasVariants.dispatchEvent(new Event('change'));
+            }
+            
+            const selectedSizes = document.querySelectorAll('.variant-size:checked').length;
+            const selectedColors = document.querySelectorAll('.variant-color:checked').length;
+            
+            if (selectedSizes === 0 && selectedColors === 0) {
+                log('No sizes or colors selected. Auto-selecting sample variants...', 'info');
+                selectSampleVariants();
+            }
+            
+            log('Clicking generate variants button...', 'info');
+            const generateBtn = document.getElementById('generate-variants');
+            if (generateBtn) {
+                generateBtn.click();
+            } else {
+                log('ERROR: Generate button not found!', 'error');
+            }
+        }
+        
+        // Price formatting functions
+        function formatPrice(price) {
+            if (!price || price === 0) return '';
+            return parseInt(price).toLocaleString('vi-VN');
+        }
+
+        function unformatPrice(priceString) {
+            if (!priceString) return '';
+            return priceString.replace(/[^\d]/g, '');
+        }
+        
+        // Initialize the form
+        document.addEventListener('DOMContentLoaded', function() {
+            log('=== INITIALIZING TEST FORM ===', 'success');
+            
+            // Has variants toggle
+            document.getElementById('has_variants').addEventListener('change', function() {
+                const variantsSection = document.getElementById('variants-section');
+                const simpleSection = document.getElementById('simple-product-section');
+                
+                if (this.checked) {
+                    variantsSection.style.display = 'block';
+                    simpleSection.style.display = 'none';
+                    log('Switched to VARIANTS mode', 'success');
+                } else {
+                    variantsSection.style.display = 'none';
+                    simpleSection.style.display = 'block';
+                    log('Switched to SIMPLE mode', 'info');
+                }
+                updateStats();
+            });
+            
+            // Generate variants button
+            document.getElementById('generate-variants').addEventListener('click', function() {
+                log('Generate variants button clicked!', 'info');
+                
+                const selectedSizes = Array.from(document.querySelectorAll('.variant-size:checked')).map(cb => cb.value);
+                const selectedColors = Array.from(document.querySelectorAll('.variant-color:checked')).map(cb => ({
+                    name: cb.value,
+                    code: cb.dataset.colorCode
+                }));
+
+                log(`Selected sizes: [${selectedSizes.join(', ')}]`, 'info');
+                log(`Selected colors: [${selectedColors.map(c => c.name).join(', ')}]`, 'info');
+
+                if (selectedSizes.length === 0 && selectedColors.length === 0) {
+                    log('ERROR: No sizes or colors selected!', 'error');
+                    alert('Vui lòng chọn ít nhất 1 size hoặc 1 màu sắc để tạo biến thể.');
+                    return;
+                }
+
+                // If only sizes selected, use default color
+                if (selectedSizes.length > 0 && selectedColors.length === 0) {
+                    selectedColors.push({ name: 'Mặc định', code: '#ffffff' });
+                    log('Added default color', 'info');
+                }
+                
+                // If only colors selected, use default size
+                if (selectedColors.length > 0 && selectedSizes.length === 0) {
+                    selectedSizes.push('OneSize');
+                    log('Added default size', 'info');
+                }
+
+                generateVariantsTable(selectedSizes, selectedColors);
+            });
+            
+            // Update stats on checkbox changes
+            document.querySelectorAll('.variant-size, .variant-color').forEach(checkbox => {
+                checkbox.addEventListener('change', updateStats);
+            });
+            
+            // Copy the actual generateVariantsTable function from the edit form
+            window.generateVariantsTable = function(sizes, colors) {
+                log(`generateVariantsTable called with ${sizes.length} sizes and ${colors.length} colors`, 'info');
+                
+                let tableHTML = `
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="bulk-actions" style="display: none;">
+                            <button type="button" class="btn btn-outline-danger btn-sm" id="delete-selected-variants">
+                                <i class="fas fa-trash me-2"></i>Xóa đã chọn (<span id="selected-count">0</span>)
+                            </button>
+                        </div>
+                        <div class="text-muted">
+                            <small>Tổng <span id="variants-count"></span> biến thể</small>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped" id="variants-table">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th width="40">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="select-all-variants">
+                                        </div>
+                                    </th>
+                                    <th>Size</th>
+                                    <th>Màu sắc</th>
+                                    <th>Giá bán (₫)</th>
+                                    <th>Giá sale (₫)</th>
+                                    <th>Tồn kho</th>
+                                    <th>SKU</th>
+                                    <th>Trạng thái</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+
+                let variantIndex = 0;
+                const basePrice = document.getElementById('price') ? document.getElementById('price').value.replace(/[^\d]/g, '') : '150000';
+
+                // Add new variants
+                sizes.forEach(size => {
+                    colors.forEach(color => {
+                        log(`Creating variant: ${size} - ${color.name}`, 'success');
+                        const productSKU = document.getElementById('sku').value || 'PROD';
+                        const variantSKU = `${productSKU}-${size.toUpperCase()}-${color.name.toUpperCase().replace(/\s+/g, '')}`;
+                        
+                        tableHTML += `
+                            <tr>
+                                <td>
+                                    <div class="form-check">
+                                        <input class="form-check-input variant-checkbox" type="checkbox">
+                                    </div>
+                                </td>
+                                <td>
+                                    <input type="text" class="form-control form-control-sm" name="variants[${variantIndex}][size]" value="${size}" required>
+                                </td>
+                                <td>
+                                    <input type="text" class="form-control form-control-sm" name="variants[${variantIndex}][color]" value="${color.name}" required>
+                                    <input type="hidden" name="variants[${variantIndex}][color_code]" value="${color.code}">
+                                    <div class="d-flex align-items-center mt-1">
+                                        <span class="color-preview me-2" style="background-color: ${color.code};"></span>
+                                        <small class="text-muted">${color.name}</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="input-group input-group-sm">
+                                        <input type="text" class="form-control price-input" name="variants[${variantIndex}][price]" value="${formatPrice(basePrice)}" required>
+                                        <span class="input-group-text">₫</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="input-group input-group-sm">
+                                        <input type="text" class="form-control price-input" name="variants[${variantIndex}][sale_price]" value="" placeholder="Tùy chọn">
+                                        <span class="input-group-text">₫</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <input type="number" class="form-control form-control-sm" name="variants[${variantIndex}][stock_quantity]" value="10" min="0" required>
+                                </td>
+                                <td>
+                                    <input type="text" class="form-control form-control-sm" name="variants[${variantIndex}][sku]" value="${variantSKU}" required>
+                                </td>
+                                <td>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" name="variants[${variantIndex}][is_active]" value="1" checked>
+                                    </div>
+                                </td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-outline-danger remove-variant">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                        variantIndex++;
+                    });
+                });
+
+                tableHTML += `
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+
+                const variantsTableContainer = document.getElementById('variants-table-container');
+                if (variantsTableContainer) {
+                    variantsTableContainer.innerHTML = tableHTML;
+                    log(`Table created with ${variantIndex} variants`, 'success');
+                    
+                    // Update variants count
+                    const variantsCount = document.getElementById('variants-count');
+                    if (variantsCount) {
+                        variantsCount.textContent = variantIndex;
+                    }
+                    
+                    updateStats();
+                } else {
+                    log('ERROR: variants-table-container not found!', 'error');
+                }
+            };
+            
+            // Initial stats update
+            updateStats();
+            log('Test form initialized successfully!', 'success');
+        });
+    </script>
+</body>
+</html>

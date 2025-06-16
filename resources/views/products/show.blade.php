@@ -236,15 +236,84 @@
     
     .related-product-card {
         border: none;
-        border-radius: 10px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        transition: all 0.3s ease;
+        border-radius: 12px;
         overflow: hidden;
+        transition: all 0.3s ease;
+        height: 100%;
     }
     
     .related-product-card:hover {
         transform: translateY(-5px);
-        box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.12) !important;
+    }
+    
+    .related-product-card .card-img-wrapper {
+        height: 250px;
+        background: #f8f9fa;
+    }
+    
+    .related-product-card .card-img-top {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+    
+    .related-product-card:hover .card-img-top {
+        transform: scale(1.05);
+    }
+    
+    .related-product-card .card-body {
+        padding: 1rem;
+    }
+    
+    .related-product-card .card-title {
+        font-size: 0.95rem;
+        line-height: 1.4;
+        height: 2.8rem;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+    
+    .text-truncate-2 {
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+    
+    .related-product-card .rating {
+        font-size: 0.85rem;
+    }
+    
+    .related-product-card .price {
+        font-size: 1.1rem;
+    }
+    
+    .discount-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .price-wrapper {
+        min-height: 2rem;
+    }
+    
+    @media (max-width: 768px) {
+        .related-product-card .card-img-wrapper {
+            height: 200px;
+        }
+        
+        .related-product-card .card-body {
+            padding: 0.75rem;
+        }
+        
+        .related-product-card .btn-sm {
+            padding: 0.4rem 0.75rem;
+            font-size: 0.875rem;
+        }
     }
     
     .stock-status {
@@ -363,33 +432,66 @@
                         @if($inStock)
                             <span class="text-muted">({{ $product->stock_quantity }} sản phẩm có sẵn)</span>
                         @endif
-                    </div>
-                      <!-- Size Selector -->
-                    @if($product->sizes && count($product->sizes) > 0)
-                        <div class="size-selector">
-                            <label class="form-label fw-bold">Kích thước:</label>
-                            <div class="size-options">
-                                @foreach($product->sizes as $index => $size)
-                                    <div class="size-option {{ $index === 0 ? 'active' : '' }}" onclick="selectSize(this)">
-                                        {{ $size }}
-                                    </div>
-                                @endforeach
+                    </div>                      <!-- Size & Color Selector -->
+                    @if($product->has_variants && $product->activeVariants->count() > 0)
+                        <!-- Variant Product -->
+                        @php
+                            $availableSizes = $product->getAvailableSizes();
+                            $availableColors = $product->getAvailableColors();
+                        @endphp
+                        
+                        @if(count($availableSizes) > 0)
+                            <div class="size-selector">
+                                <label class="form-label fw-bold">Kích thước:</label>
+                                <div class="size-options">
+                                    @foreach($availableSizes as $index => $size)
+                                        <div class="size-option {{ $index === 0 ? 'active' : '' }}" data-size="{{ $size }}" onclick="selectVariantSize(this)">
+                                            {{ $size }}
+                                        </div>
+                                    @endforeach
+                                </div>
                             </div>
-                        </div>
-                    @endif
-                    
-                    <!-- Color Selector -->
-                    @if($product->colors && count($product->colors) > 0)
-                        <div class="color-selector">
-                            <label class="form-label fw-bold">Màu sắc:</label>
-                            <div class="color-options">
-                                @foreach($product->colors as $index => $color)
-                                    <div class="color-option {{ $index === 0 ? 'active' : '' }}" onclick="selectColor(this)">
-                                        {{ $color }}
-                                    </div>
-                                @endforeach
+                        @endif
+                        
+                        @if(count($availableColors) > 0)
+                            <div class="color-selector">
+                                <label class="form-label fw-bold">Màu sắc:</label>
+                                <div class="color-options">
+                                    @foreach($availableColors as $index => $color)
+                                        <div class="color-option {{ $index === 0 ? 'active' : '' }}" data-color="{{ $color }}" onclick="selectVariantColor(this)">
+                                            {{ $color }}
+                                        </div>
+                                    @endforeach
+                                </div>
                             </div>
-                        </div>
+                        @endif
+                    @else
+                        <!-- Simple Product -->
+                        @if($product->sizes && count($product->sizes) > 0)
+                            <div class="size-selector">
+                                <label class="form-label fw-bold">Kích thước:</label>
+                                <div class="size-options">
+                                    @foreach($product->sizes as $index => $size)
+                                        <div class="size-option {{ $index === 0 ? 'active' : '' }}" onclick="selectSize(this)">
+                                            {{ $size }}
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+                        
+                        @if($product->colors && count($product->colors) > 0)
+                            <div class="color-selector">
+                                <label class="form-label fw-bold">Màu sắc:</label>
+                                <div class="color-options">
+                                    @foreach($product->colors as $index => $color)
+                                        <div class="color-option {{ $index === 0 ? 'active' : '' }}" onclick="selectColor(this)">
+                                            {{ $color }}
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
                     @endif
                     
                     <!-- Quantity -->
@@ -468,34 +570,47 @@
 <section class="py-5 bg-light related-products">
     <div class="container">
         <h2 class="section-title text-center mb-5">SẢN PHẨM LIÊN QUAN</h2>
-          <div class="row g-4">
+        <div class="row g-4">
             @foreach($relatedProducts as $relatedProduct)
-                <div class="col-lg-2 col-md-4 col-6">
-                    <div class="related-product-card card h-100">
-                        <a href="{{ route('products.show', $relatedProduct->id) }}">
-                            <img src="{{ $relatedProduct->main_image }}" 
-                                 class="card-img-top" alt="{{ $relatedProduct->name }}" style="height: 200px; object-fit: cover;">
-                        </a>
-                        <div class="card-body p-3">
-                            <h6 class="card-title mb-2">
+                <div class="col-lg-3 col-md-4 col-sm-6 col-12">
+                    <div class="related-product-card card h-100 shadow-sm">
+                        <div class="card-img-wrapper position-relative overflow-hidden">
+                            <a href="{{ route('products.show', $relatedProduct->id) }}">
+                                <img src="{{ $relatedProduct->main_image }}" 
+                                     class="card-img-top" alt="{{ $relatedProduct->name }}">
+                            </a>
+                            @if($relatedProduct->original_price && $relatedProduct->original_price > $relatedProduct->price)
+                                @php
+                                    $discountPercent = round((($relatedProduct->original_price - $relatedProduct->price) / $relatedProduct->original_price) * 100);
+                                @endphp
+                                <span class="discount-label position-absolute top-0 end-0 bg-danger text-white px-2 py-1 m-2 rounded">
+                                    -{{ $discountPercent }}%
+                                </span>
+                            @endif
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                            <h6 class="card-title mb-2 text-truncate-2">
                                 <a href="{{ route('products.show', $relatedProduct->id) }}" class="text-decoration-none text-dark">
                                     {{ $relatedProduct->name }}
                                 </a>
                             </h6>
-                            <div class="rating mb-2">
+                            <div class="rating mb-2 small">
                                 @for($i = 1; $i <= 5; $i++)
-                                    <i class="fas fa-star{{ $i <= $relatedProduct->rating ? '' : '-o' }}"></i>
+                                    <i class="fas fa-star{{ $i <= $relatedProduct->rating ? ' text-warning' : ' text-muted' }}"></i>
                                 @endfor
+                                <span class="text-muted ms-1">({{ $relatedProduct->reviews_count }})</span>
                             </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <p class="price mb-0">{{ $relatedProduct->formatted_price }}</p>
-                                    @if($relatedProduct->original_price && $relatedProduct->original_price > $relatedProduct->price)
-                                        <small class="text-muted text-decoration-line-through">{{ $relatedProduct->formatted_original_price }}</small>
-                                    @endif
+                            <div class="mt-auto">
+                                <div class="price-wrapper mb-2">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="price text-danger fw-bold">{{ $relatedProduct->formatted_price }}</span>
+                                        @if($relatedProduct->original_price && $relatedProduct->original_price > $relatedProduct->price)
+                                            <small class="text-muted text-decoration-line-through">{{ $relatedProduct->formatted_original_price }}</small>
+                                        @endif
+                                    </div>
                                 </div>
-                                <button class="btn btn-sm btn-outline-danger" onclick="addToCartQuick({{ $relatedProduct->id }})">
-                                    <i class="fas fa-cart-plus"></i>
+                                <button class="btn btn-outline-danger btn-sm w-100" onclick="addToCartQuick({{ $relatedProduct->id }})">
+                                    <i class="fas fa-cart-plus me-1"></i>Thêm vào giỏ
                                 </button>
                             </div>
                         </div>
@@ -505,6 +620,10 @@
         </div>
     </div>
 </section>
+
+<!-- Product Reviews Section -->
+@include('components.product-reviews', ['product' => $product])
+
 @endsection
 
 @push('scripts')
@@ -534,6 +653,130 @@
         };
         newImage.src = imageUrl;
     }
+      // Variant functionality
+    let currentVariant = null;
+    const hasVariants = {{ $product->has_variants ? 'true' : 'false' }};
+    const variants = @json($product->has_variants ? $product->activeVariants : []);
+    const priceRange = @json($product->getPriceRange());
+    
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', function() {
+        if (hasVariants && variants.length > 0) {
+            // Set initial variant
+            updateVariantSelection();
+        }
+    });
+    
+    function selectVariantSize(element) {
+        document.querySelectorAll('.size-option').forEach(option => {
+            option.classList.remove('active');
+        });
+        element.classList.add('active');
+        updateVariantSelection();
+    }
+    
+    function selectVariantColor(element) {
+        document.querySelectorAll('.color-option').forEach(option => {
+            option.classList.remove('active');
+        });
+        element.classList.add('active');
+        updateVariantSelection();
+    }
+    
+    function updateVariantSelection() {
+        const selectedSize = document.querySelector('.size-option.active')?.dataset.size;
+        const selectedColor = document.querySelector('.color-option.active')?.dataset.color;
+        
+        // Find matching variant
+        currentVariant = variants.find(variant => 
+            variant.size === selectedSize && variant.color === selectedColor
+        );
+        
+        // Update price display
+        updatePriceDisplay();
+        
+        // Update stock info
+        updateStockInfo();
+        
+        // Update quantity limit
+        updateQuantityLimit();
+    }
+    
+    function updatePriceDisplay() {
+        const priceElement = document.querySelector('.current-price');
+        const originalPriceElement = document.querySelector('.original-price');
+        const discountElement = document.querySelector('.discount-badge');
+        
+        if (currentVariant) {
+            const currentPrice = currentVariant.sale_price || currentVariant.price;
+            const originalPrice = currentVariant.sale_price ? currentVariant.price : null;
+            
+            // Update current price
+            priceElement.textContent = new Intl.NumberFormat('vi-VN').format(currentPrice) + '₫';
+            
+            // Update original price and discount
+            if (originalPrice && originalPrice > currentPrice) {
+                originalPriceElement.textContent = new Intl.NumberFormat('vi-VN').format(originalPrice) + '₫';
+                originalPriceElement.style.display = 'inline';
+                
+                const discount = Math.round(((originalPrice - currentPrice) / originalPrice) * 100);
+                if (discountElement) {
+                    discountElement.textContent = `-${discount}%`;
+                    discountElement.style.display = 'inline-block';
+                }
+            } else {
+                originalPriceElement.style.display = 'none';
+                if (discountElement) {
+                    discountElement.style.display = 'none';
+                }
+            }
+        }
+    }
+    
+    function updateStockInfo() {
+        const stockElement = document.querySelector('.stock-info');
+        const stockStatusElement = stockElement?.querySelector('.stock-available, .stock-out');
+        const stockQuantityElement = stockElement?.querySelector('.text-muted');
+        
+        if (currentVariant && stockElement) {
+            const inStock = currentVariant.stock_quantity > 0;
+            
+            if (stockStatusElement) {
+                stockStatusElement.textContent = inStock ? 'Còn hàng' : 'Hết hàng';
+                stockStatusElement.className = inStock ? 'stock-available' : 'stock-out';
+            }
+            
+            if (stockQuantityElement) {
+                if (inStock) {
+                    stockQuantityElement.textContent = `(${currentVariant.stock_quantity} sản phẩm có sẵn)`;
+                    stockQuantityElement.style.display = 'inline';
+                } else {
+                    stockQuantityElement.style.display = 'none';
+                }
+            }
+        }
+    }
+    
+    function updateQuantityLimit() {
+        const quantityInput = document.getElementById('quantity');
+        const addToCartBtn = document.getElementById('add-to-cart-btn');
+        
+        if (currentVariant && quantityInput) {
+            const maxQuantity = Math.max(1, currentVariant.stock_quantity);
+            quantityInput.max = maxQuantity;
+            
+            // Reset quantity if it exceeds available stock
+            if (parseInt(quantityInput.value) > maxQuantity) {
+                quantityInput.value = Math.min(1, maxQuantity);
+            }
+            
+            // Disable add to cart button if out of stock
+            if (addToCartBtn) {
+                addToCartBtn.disabled = currentVariant.stock_quantity === 0;
+                addToCartBtn.textContent = currentVariant.stock_quantity === 0 ? 'Hết hàng' : 'Thêm vào giỏ hàng';
+            }
+        }
+    }
     
     function selectSize(element) {
         document.querySelectorAll('.size-option').forEach(option => {
@@ -548,10 +791,16 @@
         });
         element.classList.add('active');
     }
-    
-    function increaseQuantity() {
+      function increaseQuantity() {
         const quantityInput = document.getElementById('quantity');
-        const max = parseInt(quantityInput.getAttribute('max'));
+        let max;
+        
+        if (hasVariants && currentVariant) {
+            max = currentVariant.stock_quantity;
+        } else {
+            max = parseInt(quantityInput.getAttribute('max'));
+        }
+        
         const current = parseInt(quantityInput.value);
         
         if (current < max) {
@@ -565,7 +814,8 @@
         
         if (current > 1) {
             quantityInput.value = current - 1;
-        }    }
+        }
+    }
     
     // Functions are now handled by product-detail.js
     // Remove duplicate functions to avoid conflicts

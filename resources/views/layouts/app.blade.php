@@ -3,7 +3,11 @@
 <head>    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Hang The Thao - Cửa hàng thể thao uy tín')</title><!-- Bootstrap CSS -->
+    <title>@yield('title', 'Hang The Thao - Cửa hàng thể thao uy tín')</title>
+    
+    <script>
+        window.csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    </script><!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">    <!-- Custom CSS -->
@@ -172,27 +176,67 @@
                                     <i class="fas fa-shopping-bag me-2"></i>Phụ Kiện
                                 </a></li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="#">
+                                <li><a class="dropdown-item" href="{{ route('products.index') }}">
                                     <i class="fas fa-tags me-2"></i>Tất cả sản phẩm
                                 </a></li>
                             </ul>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">Giới thiệu</a>
+                            <a class="nav-link" href="/about">Giới thiệu</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">Liên hệ</a>
+                            <a class="nav-link" href="/contact">Liên hệ</a>
                         </li>
                     </ul>
                       <div class="d-flex">
                         <form class="d-flex me-3" method="GET" action="{{ route('search') }}">
-                            <input class="form-control" type="search" name="q" placeholder="Tìm kiếm..." style="width: 200px;" value="{{ request('q') }}">
+                            <input class="form-control me-2" type="search" name="q" placeholder="Tìm kiếm..." style="width: 200px;" value="{{ request('q') }}">
                             <button class="btn btn-outline-danger" type="submit">
                                 <i class="fas fa-search"></i>
-                            </button>
-                        </form><a href="#" class="btn btn-outline-danger me-2">
-                            <i class="fas fa-user"></i> Đăng nhập
-                        </a>                        <a href="{{ route('cart.index') }}" class="btn btn-danger">
+                            </button>                        </form>
+                        
+                        <!-- Authentication Links -->
+                        @auth
+                            <div class="dropdown me-2">
+                                <button class="btn btn-outline-danger dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-user me-1"></i>
+                                    {{ Auth::user()->name }}
+                                    @if(Auth::user()->isAdmin())
+                                        <span class="badge bg-danger ms-1">Admin</span>
+                                    @endif
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('profile') }}">
+                                            <i class="fas fa-user-edit me-2"></i>Thông tin cá nhân
+                                        </a>
+                                    </li>
+                                    @if(Auth::user()->isAdmin())
+                                        <li>
+                                            <a class="dropdown-item" href="{{ route('admin.dashboard') }}">
+                                                <i class="fas fa-tachometer-alt me-2"></i>Quản trị
+                                            </a>
+                                        </li>
+                                    @endif
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <form method="POST" action="{{ route('logout') }}" class="d-inline">
+                                            @csrf
+                                            <button type="submit" class="dropdown-item text-danger">
+                                                <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
+                        @else
+                            <a href="{{ route('login') }}" class="btn btn-outline-danger me-2">
+                                <i class="fas fa-sign-in-alt"></i> Đăng nhập
+                            </a>
+                            <a href="{{ route('register') }}" class="btn btn-outline-primary me-2">
+                                <i class="fas fa-user-plus"></i> Đăng ký
+                            </a>
+                        @endauth<a href="{{ route('cart.index') }}" class="btn btn-danger">
                             <i class="fas fa-shopping-cart"></i> 
                             <span class="badge bg-white text-danger" id="header-cart-count">
                                 {{ $cartCount ?? 0 }}

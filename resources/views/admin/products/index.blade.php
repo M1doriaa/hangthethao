@@ -2,6 +2,78 @@
 
 @section('title', 'Quản lý sản phẩm')
 
+@push('styles')
+<style>
+.filter-active {
+    border-left: 4px solid var(--primary-red);
+}
+
+.search-highlight {
+    background-color: rgba(196, 30, 58, 0.1);
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+
+.status-filter small {
+    display: block;
+    margin-top: 4px;
+}
+
+.btn-group .btn:disabled {
+    opacity: 0.6;
+}
+
+.loading-overlay {
+    position: relative;
+}
+
+.loading-overlay::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(196, 30, 58, 0.02);
+}
+
+.badge {
+    font-size: 0.875em;
+    font-weight: 500;
+}
+
+.form-select:focus,
+.form-control:focus {
+    border-color: var(--primary-red);
+    box-shadow: 0 0 0 0.2rem rgba(196, 30, 58, 0.25);
+}
+
+@media (max-width: 768px) {
+    .btn-group {
+        flex-direction: column;
+    }
+    
+    .btn-group .btn {
+        margin-bottom: 2px;
+    }
+    
+    .table th,
+    .table td {
+        padding: 0.5rem 0.25rem;
+        font-size: 0.875rem;
+    }
+}
+</style>
+@endpush
+
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="page-title">
@@ -14,16 +86,32 @@
 
 <!-- Filters -->
 <div class="card mb-4">
+    <div class="card-header">
+        <h6 class="card-title mb-0">
+            <i class="fas fa-filter me-2"></i>Bộ lọc và tìm kiếm
+            @if(request()->hasAny(['search', 'category', 'status']))
+                <span class="badge bg-primary ms-2">Đang lọc</span>
+            @endif
+        </h6>
+    </div>
     <div class="card-body">
         <form method="GET" action="{{ route('admin.products.index') }}" class="row g-3">
             <div class="col-md-4">
-                <label class="form-label">Tìm kiếm</label>
+                <label class="form-label">
+                    <i class="fas fa-search me-1"></i>Tìm kiếm
+                </label>
                 <input type="text" class="form-control" name="search" 
                        value="{{ request('search') }}" 
-                       placeholder="Tên sản phẩm, SKU, danh mục...">
+                       placeholder="Tên sản phẩm, SKU, danh mục..."
+                       autocomplete="off">
+                @if(request('search'))
+                    <small class="text-muted">Tìm kiếm: "{{ request('search') }}"</small>
+                @endif
             </div>
             <div class="col-md-3">
-                <label class="form-label">Danh mục</label>
+                <label class="form-label">
+                    <i class="fas fa-tags me-1"></i>Danh mục
+                </label>
                 <select class="form-select" name="category">
                     <option value="">Tất cả danh mục</option>
                     @foreach($categories as $slug => $name)
@@ -32,22 +120,51 @@
                         </option>
                     @endforeach
                 </select>
+                @if(request('category'))
+                    <small class="text-muted">Danh mục: {{ $categories[request('category')] ?? request('category') }}</small>
+                @endif
             </div>
             <div class="col-md-3">
-                <label class="form-label">Trạng thái</label>
+                <label class="form-label">
+                    <i class="fas fa-toggle-on me-1"></i>Trạng thái
+                </label>
                 <select class="form-select" name="status">
                     <option value="">Tất cả trạng thái</option>
-                    <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Hoạt động</option>
-                    <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Tạm dừng</option>
-                    <option value="out_of_stock" {{ request('status') == 'out_of_stock' ? 'selected' : '' }}>Hết hàng</option>
+                    <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>
+                        🟢 Hoạt động
+                    </option>
+                    <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>
+                        🟡 Tạm dừng
+                    </option>
+                    <option value="out_of_stock" {{ request('status') == 'out_of_stock' ? 'selected' : '' }}>
+                        🔴 Hết hàng
+                    </option>
                 </select>
+                @if(request('status'))
+                    <small class="text-muted">
+                        Trạng thái: 
+                        @if(request('status') == 'active')
+                            <span class="text-success">🟢 Hoạt động</span>
+                        @elseif(request('status') == 'inactive')
+                            <span class="text-warning">🟡 Tạm dừng</span>
+                        @elseif(request('status') == 'out_of_stock')
+                            <span class="text-danger">🔴 Hết hàng</span>
+                        @endif
+                    </small>
+                @endif
             </div>
             <div class="col-md-2">
                 <label class="form-label">&nbsp;</label>
                 <div class="d-grid gap-2">
-                    <button type="submit" class="btn btn-outline-primary">
+                    <button type="submit" class="btn btn-primary">
                         <i class="fas fa-search"></i> Lọc
                     </button>
+                    @if(request()->hasAny(['search', 'category', 'status']))
+                        <a href="{{ route('admin.products.index') }}" 
+                           class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-times"></i> Xóa bộ lọc
+                        </a>
+                    @endif
                 </div>
             </div>
         </form>
@@ -125,14 +242,15 @@
                                 @else
                                     <span class="badge bg-danger">Hết hàng</span>
                                 @endif
-                            </td>
-                            <td>
+                            </td>                            <td>
                                 @if($product->status === 'active')
-                                    <span class="badge bg-success">Hoạt động</span>
+                                    <span class="badge bg-success">🟢 Hoạt động</span>
                                 @elseif($product->status === 'inactive')
-                                    <span class="badge bg-secondary">Tạm dừng</span>
+                                    <span class="badge bg-warning">🟡 Tạm dừng</span>
+                                @elseif($product->status === 'out_of_stock')
+                                    <span class="badge bg-danger">🔴 Hết hàng</span>
                                 @else
-                                    <span class="badge bg-danger">Hết hàng</span>
+                                    <span class="badge bg-secondary">{{ $product->status }}</span>
                                 @endif
                             </td>
                             <td>
@@ -215,6 +333,101 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit form when filter changes
+    const filterForm = document.querySelector('form[action*="products"]');
+    const categorySelect = filterForm.querySelector('select[name="category"]');
+    const statusSelect = filterForm.querySelector('select[name="status"]');
+    
+    // Add change event listeners to selects
+    if (categorySelect) {
+        categorySelect.addEventListener('change', function() {
+            if (this.value !== '') {
+                filterForm.submit();
+            }
+        });
+    }
+    
+    if (statusSelect) {
+        statusSelect.addEventListener('change', function() {
+            if (this.value !== '') {
+                filterForm.submit();
+            }
+        });
+    }
+    
+    // Enhanced search with debounce
+    const searchInput = filterForm.querySelector('input[name="search"]');
+    let searchTimeout;
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            const query = this.value;
+            
+            // Show loading indicator
+            const searchIcon = document.querySelector('.btn[type="submit"] i');
+            if (searchIcon) {
+                searchIcon.className = 'fas fa-spinner fa-spin';
+            }
+            
+            searchTimeout = setTimeout(() => {
+                if (query.length >= 3 || query.length === 0) {
+                    filterForm.submit();
+                } else {
+                    // Reset icon
+                    if (searchIcon) {
+                        searchIcon.className = 'fas fa-search';
+                    }
+                }
+            }, 500);
+        });
+        
+        // Handle Enter key
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                clearTimeout(searchTimeout);
+                filterForm.submit();
+            }
+        });
+    }
+    
+    // Add loading states to action buttons
+    const actionButtons = document.querySelectorAll('.btn-group .btn');
+    actionButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            if (this.href) {
+                const icon = this.querySelector('i');
+                if (icon) {
+                    icon.className = 'fas fa-spinner fa-spin';
+                }
+                this.classList.add('disabled');
+            }
+        });
+    });
+    
+    // Filter status counter
+    updateFilterCount();
+    
+    function updateFilterCount() {
+        const activeFilters = [];
+        if (filterForm.querySelector('input[name="search"]').value) activeFilters.push('Tìm kiếm');
+        if (filterForm.querySelector('select[name="category"]').value) activeFilters.push('Danh mục');
+        if (filterForm.querySelector('select[name="status"]').value) activeFilters.push('Trạng thái');
+        
+        const badge = document.querySelector('.badge');
+        if (badge && activeFilters.length > 0) {
+            badge.textContent = `Đang lọc (${activeFilters.length})`;
+            badge.title = 'Bộ lọc đang áp dụng: ' + activeFilters.join(', ');
+        }
+    }
+});
+</script>
+@endpush
 
 @push('scripts')
 <script>

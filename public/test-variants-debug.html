@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Variants Issue</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>Test Variants Generation Issue</h1>
+        
+        <div class="alert alert-info">
+            <strong>Hướng dẫn test:</strong>
+            <ol>
+                <li>Nhập giá vào trường "Giá bán" (VD: 500000)</li>
+                <li>Chọn ít nhất 1 size hoặc 1 màu</li>
+                <li>Click "Tạo Variants"</li>
+                <li>Mở Developer Tools (F12) để xem console log</li>
+            </ol>
+        </div>
+
+        <form>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="price" class="form-label">Giá bán</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control price-input" id="price" name="price" value="" placeholder="Nhập giá VD: 500000">
+                        <span class="input-group-text">₫</span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <label for="sku" class="form-label">SKU</label>
+                    <input type="text" class="form-control" id="sku" name="sku" value="TEST-SKU">
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Chọn Size</label>
+                <div class="row">
+                    <div class="col-md-2">
+                        <div class="form-check">
+                            <input class="form-check-input variant-size" type="checkbox" id="size_S" value="S">
+                            <label class="form-check-label" for="size_S">S</label>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-check">
+                            <input class="form-check-input variant-size" type="checkbox" id="size_M" value="M">
+                            <label class="form-check-label" for="size_M">M</label>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-check">
+                            <input class="form-check-input variant-size" type="checkbox" id="size_L" value="L">
+                            <label class="form-check-label" for="size_L">L</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Chọn Màu</label>
+                <div class="row">
+                    <div class="col-md-2">
+                        <div class="form-check">
+                            <input class="form-check-input variant-color" type="checkbox" id="color_red" value="Đỏ" data-color-code="#FF0000">
+                            <label class="form-check-label" for="color_red">Đỏ</label>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-check">
+                            <input class="form-check-input variant-color" type="checkbox" id="color_blue" value="Xanh" data-color-code="#0000FF">
+                            <label class="form-check-label" for="color_blue">Xanh</label>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-check">
+                            <input class="form-check-input variant-color" type="checkbox" id="color_green" value="Lục" data-color-code="#00FF00">
+                            <label class="form-check-label" for="color_green">Lục</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <button type="button" class="btn btn-primary" id="generate-variants">Tạo Variants</button>
+            </div>
+
+            <div id="variants-table-container" style="display: none;">
+                <h5>Bảng Variants</h5>
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Size</th>
+                                <th>Màu sắc</th>
+                                <th>Giá bán</th>
+                                <th>SKU</th>
+                            </tr>
+                        </thead>
+                        <tbody id="variants-table-body">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // Price formatting functions
+        function formatPrice(price) {
+            if (!price || price === 0) return '';
+            return parseInt(price).toLocaleString('vi-VN');
+        }
+
+        function unformatPrice(priceString) {
+            if (!priceString) return '';
+            return priceString.replace(/[^\d]/g, '');
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded');
+            
+            const generateVariantsBtn = document.getElementById('generate-variants');
+            const variantsTableBody = document.getElementById('variants-table-body');
+            const variantsTableContainer = document.getElementById('variants-table-container');
+            const priceInput = document.getElementById('price');
+
+            console.log('Elements found:', {
+                generateVariantsBtn: !!generateVariantsBtn,
+                variantsTableBody: !!variantsTableBody,
+                variantsTableContainer: !!variantsTableContainer,
+                priceInput: !!priceInput
+            });
+
+            // Price formatting for main price input
+            if (priceInput) {
+                priceInput.addEventListener('input', function() {
+                    const unformatted = unformatPrice(this.value);
+                    const formatted = formatPrice(unformatted);
+                    this.value = formatted;
+                });
+            }
+
+            // Generate variants
+            if (generateVariantsBtn) {
+                generateVariantsBtn.addEventListener('click', function() {
+                    console.log('Generate variants clicked');
+                    
+                    const selectedSizes = Array.from(document.querySelectorAll('.variant-size:checked')).map(cb => cb.value);
+                    const selectedColors = Array.from(document.querySelectorAll('.variant-color:checked')).map(cb => ({
+                        name: cb.value,
+                        code: cb.dataset.colorCode
+                    }));
+
+                    console.log('Selected sizes:', selectedSizes);
+                    console.log('Selected colors:', selectedColors);
+
+                    if (selectedSizes.length === 0 && selectedColors.length === 0) {
+                        alert('Vui lòng chọn ít nhất một size hoặc màu sắc!');
+                        return;
+                    }
+
+                    // Generate combinations
+                    const variants = [];
+                    
+                    if (selectedSizes.length > 0 && selectedColors.length > 0) {
+                        // Both size and color
+                        selectedSizes.forEach(size => {
+                            selectedColors.forEach(color => {
+                                variants.push({
+                                    size: size,
+                                    color: color.name,
+                                    colorCode: color.code
+                                });
+                            });
+                        });
+                    } else if (selectedSizes.length > 0) {
+                        // Only sizes
+                        selectedSizes.forEach(size => {
+                            variants.push({
+                                size: size,
+                                color: '',
+                                colorCode: ''
+                            });
+                        });
+                    } else {
+                        // Only colors
+                        selectedColors.forEach(color => {
+                            variants.push({
+                                size: '',
+                                color: color.name,
+                                colorCode: color.code
+                            });
+                        });
+                    }
+
+                    console.log('Generated variants:', variants);
+
+                    // Generate table
+                    generateVariantsTable(variants);
+                    variantsTableContainer.style.display = 'block';
+                });
+            }
+
+            function generateVariantsTable(variants) {
+                console.log('generateVariantsTable called with:', variants);
+                
+                const basePrice = unformatPrice(priceInput.value) || 0;
+                const baseSku = document.getElementById('sku').value || '';
+                
+                console.log('Base price (unformatted):', basePrice);
+                console.log('Base SKU:', baseSku);
+                
+                variantsTableBody.innerHTML = '';
+                
+                variants.forEach((variant, index) => {
+                    const row = document.createElement('tr');
+                    const variantSku = baseSku + (variant.size ? `-${variant.size}` : '') + (variant.color ? `-${variant.color.replace(/\s+/g, '')}` : '');
+                    
+                    console.log(`Creating row ${index}:`, variant);
+                    
+                    row.innerHTML = `
+                        <td>${variant.size || '-'}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                ${variant.colorCode ? `<span class="me-2" style="width: 20px; height: 20px; border-radius: 50%; background-color: ${variant.colorCode}; border: 1px solid #ddd; display: inline-block;"></span>` : ''}
+                                ${variant.color || '-'}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="input-group input-group-sm">
+                                <input type="text" class="form-control price-input" name="variants[${index}][price]" 
+                                       value="${formatPrice(basePrice)}" required>
+                                <span class="input-group-text">₫</span>
+                            </div>
+                        </td>
+                        <td>${variantSku}</td>
+                    `;
+                    
+                    variantsTableBody.appendChild(row);
+                });
+                
+                console.log('Table generated, adding price formatting');
+                
+                // Add price formatting to new inputs
+                addPriceFormatting();
+            }
+
+            function addPriceFormatting() {
+                document.querySelectorAll('.price-input').forEach(input => {
+                    // Skip main price input
+                    if (input.id === 'price') return;
+                    
+                    // Skip if already has event listeners
+                    if (input.dataset.priceFormatted) return;
+                    input.dataset.priceFormatted = 'true';
+                    
+                    console.log('Adding price formatting to:', input);
+                    
+                    input.addEventListener('input', function() {
+                        const unformatted = unformatPrice(this.value);
+                        const formatted = formatPrice(unformatted);
+                        this.value = formatted;
+                    });
+                });
+            }
+        });
+    </script>
+</body>
+</html>
